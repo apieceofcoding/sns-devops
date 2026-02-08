@@ -8,7 +8,7 @@ Kind 클러스터 설정과 Kubernetes 매니페스트를 관리한다.
 k8s/
 ├── kind-config.yaml            # 일반 (control-plane + 2 workers)
 ├── kind-config-minimal.yaml    # 최소 (control-plane only)
-└── springboot-sns/             # SNS 앱 매니페스트
+└── sns-app/             # SNS 앱 매니페스트
 ```
 
 ## Kind 클러스터 생성
@@ -31,12 +31,12 @@ kind create cluster --config k8s/kind-config-minimal.yaml
 
 ```bash
 # sns-app 이미지 빌드 & Kind에 로드
-docker build -t springboot-sns:latest ../sns-app/
-kind load docker-image springboot-sns:latest --name sns-cluster
+docker build -t sns-app:latest ../sns-app/
+kind load docker-image sns-app:latest --name sns-cluster
 
 # 매니페스트 적용 (namespace 먼저 생성)
-kubectl apply -f k8s/springboot-sns/namespace.yaml
-kubectl apply -f k8s/springboot-sns/
+kubectl apply -f k8s/sns-app/namespace.yaml
+kubectl apply -f k8s/sns-app/
 
 # 확인
 kubectl get pods -n sns
