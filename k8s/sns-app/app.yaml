@@ -71,6 +71,8 @@ kind: Service
 metadata:
   name: sns-app
   namespace: sns
+  labels:
+    app: sns-app
 spec:
   type: NodePort
   selector:
