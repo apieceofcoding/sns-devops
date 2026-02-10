@@ -23,6 +23,10 @@ resources:
 
 config:
   receivers:
+    filelog:
+      exclude:
+        - /var/log/pods/monitoring_otel-collector-opentelemetry-collector*_*/opentelemetry-collector/*.log
+        - /var/log/pods/sns_sns-app-*/*/*.log
     otlp:
       protocols:
         grpc:
