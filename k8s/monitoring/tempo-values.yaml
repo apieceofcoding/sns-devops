@@ -22,6 +22,26 @@ tempo:
       wal:
         path: /var/tempo/wal
 
+  # metrics-generator: Explore Traces 앱에서 rate/duration 등 RED 메트릭 조회에 필요
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: "http://prometheus-kube-prometheus-prometheus.monitoring:9090/api/v1/write"
+    processor:
+      service_graphs:
+        wait: 10s
+        max_items: 10000
+      span_metrics:
+        enable_target_info: true
+
+  # metrics-generator가 생성할 메트릭의 processors 활성화
+  overrides:
+    defaults:
+      metrics_generator:
+        processors:
+          - service-graphs
+          - span-metrics
+          - local-blocks
+
   receivers:
     otlp:
       protocols:
