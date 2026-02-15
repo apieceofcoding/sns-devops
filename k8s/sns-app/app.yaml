@@ -21,7 +21,7 @@ spec:
             - containerPort: 8080
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/snsdb
+              value: jdbc:postgresql://postgres.postgres.svc.cluster.local:5432/snsdb
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -33,9 +33,14 @@ spec:
                   name: sns-secret
                   key: db-password
             - name: SPRING_DATA_REDIS_HOST
-              value: redis
+              value: redis.redis.svc.cluster.local
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sns-secret
+                  key: redis-password
             - name: RUSTFS_ENDPOINT
-              value: http://rustfs:9000
+              value: http://rustfs.rustfs.svc.cluster.local:9000
             - name: RUSTFS_ACCESSKEY
               valueFrom:
                 secretKeyRef:
