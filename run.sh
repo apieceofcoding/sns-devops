@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
-# Phase 8. 통합
-# 사용법: ./run.sh
+# Phase 9. AI Agent 기반 RCA
+# 사용법: ./run.sh [분]   (기본 30)
 set -euo pipefail
 cd "$(dirname "$0")"
+MINS="${1:-30}"
 
-echo "==> AlertManager 설정 반영"
-helm upgrade prometheus prometheus-community/kube-prometheus-stack \
-    --namespace monitoring \
-    --reuse-values \
-    -f k8s/monitoring/alertmanager-values.yaml
-
-echo "==> 알림 규칙 적용"
-kubectl apply -f k8s/monitoring/alertrules.yaml
-
-echo "==> 규칙 등록 확인"
-sleep 10
-curl -fsS "http://prometheus.localhost/api/v1/rules?type=alert" | python3 -m json.tool | head -30 || true
+echo "==> 관측 스택 접속 확인"
+for name in prometheus loki tempo; do
+    if curl -fsS -o /dev/null --max-time 5 "http://$name.localhost" 2>/dev/null; then
+        echo "  $name OK"
+    else
+        echo "  $name 접속 불가. HTTPRoute 와 /etc/hosts 를 확인하세요." >&2
+    fi
+done
 
 echo
-echo "알림을 실제로 띄우려면 sns-app 에서 ./run.sh 로 에러 트래픽을 발생시키세요."
-echo "  git -C ../sns-app checkout part-8-integration && (cd ../sns-app && ./run.sh)"
+echo "==> RCA 시작점 수집 (최근 ${MINS}분)"
+tools/obsctl rca sns-app "$MINS"
+
+echo
+echo "이제 Claude Code 에게 물어보세요."
+echo "  \"sns-app 에러율이 올랐는데 원인 찾아줘\""
+echo "rca 스킬이 이 CLI 로 세 신호를 이어서 원인을 좁힙니다."
