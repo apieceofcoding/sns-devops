@@ -1,0 +1,25 @@
+alertmanager:
+  alertmanagerSpec:
+    secrets:
+      - slack-webhook
+  config:
+    global:
+      slack_api_url_file: /etc/alertmanager/secrets/slack-webhook/url
+    route:
+      receiver: slack
+      group_by: [alertname]
+      group_wait: 15s
+      group_interval: 1m
+      repeat_interval: 4h
+      routes:
+        - matchers:
+            - alertname = "Watchdog"
+          receiver: "null"
+    receivers:
+      - name: "null"
+      - name: slack
+        slack_configs:
+          - channel: "#alerts"
+            send_resolved: true
+            title: '{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ "\n" }}{{ end }}<http://grafana.localhost/d/sns-app-overview|Dashboard> | <http://grafana.localhost/explore?schemaVersion=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%7Bservice_name%3D%5C%22sns-app%5C%22%7D%20%7C%20detected_level%3D%5C%22ERROR%5C%22%22%2C%22queryType%22%3A%22range%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-15m%22%2C%22to%22%3A%22now%22%7D%7D%7D&orgId=1|Logs>'
