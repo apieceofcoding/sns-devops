@@ -1,29 +1,31 @@
 #!/usr/bin/env bash
-# Phase 5. 메트릭
-# 사용법: ./run.sh [lite|full]   (기본 lite)
+# Phase 6. 로그
+# 사용법: ./run.sh
 set -euo pipefail
 cd "$(dirname "$0")"
-PROFILE="${1:-lite}"
 
-VALUES=(-f k8s/monitoring/kube-prometheus-values.yaml)
-[ "$PROFILE" = full ] && VALUES+=(-f k8s/monitoring/kube-prometheus-values-full.yaml)
+echo "==> Loki 설치"
+helm repo add grafana https://grafana.github.io/helm-charts >/dev/null 2>&1 || true
+helm repo update grafana >/dev/null
+helm upgrade --install loki grafana/loki \
+    --namespace monitoring \
+    --version 7.3.0 \
+    -f k8s/monitoring/loki-values.yaml
 
-echo "==> kube-prometheus-stack 설치 ($PROFILE)"
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts >/dev/null 2>&1 || true
-helm repo update prometheus-community >/dev/null
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
-    --namespace monitoring --create-namespace \
-    --version 88.3.0 \
-    "${VALUES[@]}"
+echo "==> OTel Collector 설치"
+helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts >/dev/null 2>&1 || true
+helm repo update open-telemetry >/dev/null
+helm upgrade --install otel-collector open-telemetry/opentelemetry-collector \
+    --namespace monitoring \
+    --version 0.169.0 \
+    -f k8s/monitoring/otel-collector-values.yaml
 
-echo "==> HTTPRoute 와 ServiceMonitor 적용"
-kubectl apply -f k8s/ingress/monitoring.yaml
-kubectl apply -f k8s/monitoring/servicemonitor.yaml
+echo "==> HTTPRoute 적용"
+kubectl apply -f k8s/ingress/loki.yaml
 
 echo "==> 확인"
-kubectl get pods -n monitoring
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=loki -n monitoring --timeout=300s
+kubectl get pods -n monitoring -l app.kubernetes.io/name=loki
+kubectl get pods -n monitoring -l app.kubernetes.io/name=opentelemetry-collector
 echo
-echo "Grafana admin 비밀번호:"
-kubectl get secret -n monitoring prometheus-grafana \
-    -o jsonpath="{.data.admin-password}" | base64 -d; echo
-echo "  http://grafana.localhost"
+curl -fsS http://loki.localhost/loki/api/v1/labels | python3 -m json.tool || true
