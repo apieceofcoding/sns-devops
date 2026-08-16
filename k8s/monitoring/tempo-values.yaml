@@ -1,0 +1,26 @@
+tempo:
+  repository: grafana/tempo
+  tag: "2.10.8"
+  memBallastSizeMbs: 64
+  retention: 6h
+  resources:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+  metricsGenerator:
+    enabled: false
+  receivers:
+    opencensus: null
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+
+persistence:
+  enabled: true
+  size: 2Gi
