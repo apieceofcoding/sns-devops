@@ -36,7 +36,10 @@ spec:
             description: "현재 p95: {{ $value | humanizeDuration }}"
 
         - alert: SnsAppDown
-          expr: up{job="sns-app"} == 0
+          expr: |
+            up{job="sns-app"} == 0
+            or
+            absent(up{job="sns-app"}) == 1
           for: 30s
           labels:
             severity: critical

@@ -1,16 +1,10 @@
-# ArgoCD Helm chart values
-# Chart: argo/argo-cd 9.4.1 (appVersion: v3.3.0)
-
 global:
   domain: argocd.localhost
 
 configs:
   cm:
-    # Git 폴링 주기 (기본값 180s → 60s로 단축)
     timeout.reconciliation: 60s
-
   params:
-    # HTTP 모드 (TLS 없이 Ingress 사용)
     server.insecure: "true"
 
 server:
@@ -21,9 +15,11 @@ server:
     pathType: Prefix
     tls: false
 
-# 불필요한 컴포넌트 비활성화 (Kind 환경)
 dex:
   enabled: false
 
 notifications:
   enabled: false
+
+applicationSet:
+  replicas: 0

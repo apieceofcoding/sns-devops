@@ -57,6 +57,8 @@ spec:
                   fieldPath: status.hostIP
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://$(NODE_IP):4318
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=50"
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -72,10 +74,10 @@ spec:
           resources:
             requests:
               cpu: 200m
-              memory: 512Mi
+              memory: 384Mi
             limits:
               cpu: "1"
-              memory: 768Mi
+              memory: 640Mi
 ---
 apiVersion: v1
 kind: Service

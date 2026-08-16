@@ -1,6 +1,7 @@
 deploymentMode: SingleBinary
 
 loki:
+  auth_enabled: false
   commonConfig:
     replication_factor: 1
   storage:
@@ -18,49 +19,34 @@ loki:
     allow_structured_metadata: true
   pattern_ingester:
     enabled: true
-  auth_enabled: false
 
-# 활성화된 컴포넌트
 singleBinary:
-  enabled: true
   replicas: 1
   persistence:
-    size: 10Gi
+    size: 3Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+    limits:
+      memory: 448Mi
 
-# 비활성화된 컴포넌트
-minio:
-  enabled: false
-gateway:
-  enabled: false
-backend:
-  replicas: 0
 read:
   replicas: 0
 write:
   replicas: 0
-ingester:
+backend:
   replicas: 0
-querier:
-  replicas: 0
-queryFrontend:
-  replicas: 0
-queryScheduler:
-  replicas: 0
-distributor:
-  replicas: 0
-compactor:
-  replicas: 0
-indexGateway:
-  replicas: 0
-bloomCompactor:
-  replicas: 0
-bloomGateway:
-  replicas: 0
-test:
+
+minio:
   enabled: false
-lokiCanary:
+gateway:
   enabled: false
 chunksCache:
   enabled: false
 resultsCache:
+  enabled: false
+lokiCanary:
+  enabled: false
+test:
   enabled: false

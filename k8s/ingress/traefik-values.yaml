@@ -13,21 +13,10 @@ ports:
   websecure:
     port: 443
     hostPort: 443
-  postgres:
-    port: 5432
-    hostPort: 30432
-    protocol: TCP
-    expose:
-      default: true
-  redis:
-    port: 6379
-    hostPort: 30379
-    protocol: TCP
-    expose:
-      default: true
 
 service:
-  type: ClusterIP
+  spec:
+    type: ClusterIP
 
 nodeSelector:
   ingress-ready: "true"

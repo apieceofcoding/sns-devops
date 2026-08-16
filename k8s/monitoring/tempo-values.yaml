@@ -1,48 +1,19 @@
 tempo:
   repository: grafana/tempo
-  tag: "2.10.0"
-
-  memBallastSizeMbs: 256
-
+  tag: "2.10.8"
+  memBallastSizeMbs: 64
+  retention: 6h
   resources:
     requests:
       cpu: 100m
-      memory: 256Mi
+      memory: 192Mi
     limits:
       cpu: 500m
-      memory: 512Mi
-
-  retention: 24h
-
-  storage:
-    trace:
-      backend: local
-      local:
-        path: /var/tempo/traces
-      wal:
-        path: /var/tempo/wal
-
-  # metrics-generator: Explore Traces 앱에서 rate/duration 등 RED 메트릭 조회에 필요
+      memory: 384Mi
   metricsGenerator:
-    enabled: true
-    remoteWriteUrl: "http://prometheus-kube-prometheus-prometheus.monitoring:9090/api/v1/write"
-    processor:
-      service_graphs:
-        wait: 10s
-        max_items: 10000
-      span_metrics:
-        enable_target_info: true
-
-  # metrics-generator가 생성할 메트릭의 processors 활성화
-  overrides:
-    defaults:
-      metrics_generator:
-        processors:
-          - service-graphs
-          - span-metrics
-          - local-blocks
-
+    enabled: false
   receivers:
+    opencensus: null
     otlp:
       protocols:
         grpc:
@@ -52,4 +23,4 @@ tempo:
 
 persistence:
   enabled: true
-  size: 5Gi
+  size: 2Gi

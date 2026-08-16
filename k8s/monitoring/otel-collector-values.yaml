@@ -2,12 +2,8 @@ mode: daemonset
 
 image:
   repository: otel/opentelemetry-collector-contrib
-  tag: "0.145.0"
+  tag: "0.158.0"
 
-# preset이 자동 생성하는 것:
-#   logsCollection  → filelog receiver (/var/log/pods 수집, container parser) + hostPath volume mount
-#   kubernetesAttributes → k8sattributes processor + ServiceAccount/RBAC
-# 아래 config.receivers.filelog 에서 exclude 등 일부만 오버라이드하면 preset 기본값에 merge 된다.
 presets:
   logsCollection:
     enabled: true
@@ -18,20 +14,19 @@ presets:
     extractAllPodAnnotations: false
 
 resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
   requests:
     cpu: 100m
     memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
 
 config:
   receivers:
-    # filelog receiver 본체는 preset(logsCollection)이 자동 생성. 여기서는 exclude만 오버라이드.
-    filelog:
+    file_log:
       exclude:
         - /var/log/pods/monitoring_otel-collector-opentelemetry-collector*_*/opentelemetry-collector/*.log
-        - /var/log/pods/sns_sns-app-*/*/*.log  # sns-app은 OTLP로 직접 전송하므로 filelog 제외
+        - /var/log/pods/sns_sns-app-*/*/*.log
     otlp:
       protocols:
         grpc:
@@ -46,16 +41,14 @@ config:
       endpoint: tempo.monitoring.svc.cluster.local:4317
       tls:
         insecure: true
-    debug:
-      verbosity: basic
 
   service:
     pipelines:
       logs:
-        receivers: [otlp, filelog]
-        processors: [memory_limiter, k8sattributes, batch]
+        receivers: [otlp, file_log]
+        processors: [memory_limiter, k8s_attributes, batch]
         exporters: [otlphttp/loki]
       traces:
         receivers: [otlp]
-        processors: [memory_limiter, k8sattributes, batch]
+        processors: [memory_limiter, k8s_attributes, batch]
         exporters: [otlp/tempo]
