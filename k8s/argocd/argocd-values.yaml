@@ -1,0 +1,26 @@
+global:
+  domain: argocd.localhost
+
+configs:
+  cm:
+    timeout.reconciliation: 60s
+  params:
+    server.insecure: "true"
+
+server:
+  httproute:
+    enabled: true
+    parentRefs:
+      - name: traefik-gateway
+        namespace: traefik
+    hostnames:
+      - argocd.localhost
+
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+applicationSet:
+  replicas: 0

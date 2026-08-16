@@ -1,18 +1,26 @@
 #!/usr/bin/env bash
-# Phase 3. CI/CD
+# Phase 4. GitOps 와 ArgoCD
 # 사용법: ./run.sh
 set -euo pipefail
 cd "$(dirname "$0")"
 
-echo "==> 원격에서 최신 매니페스트 가져오기"
-git pull --ff-only
+echo "==> ArgoCD 설치"
+kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+helm repo add argo https://argoproj.github.io/argo-helm >/dev/null 2>&1 || true
+helm repo update argo >/dev/null
+helm upgrade --install argocd argo/argo-cd --version 10.3.3 \
+    -n argocd -f k8s/argocd/argocd-values.yaml
 
-echo "==> CI 가 갱신한 이미지 태그"
-grep 'image:' k8s/sns-app/app.yaml
+echo "==> argocd-server 대기"
+kubectl wait --for=condition=available --timeout=300s \
+    deployment/argocd-server -n argocd
 
+echo "==> Application 등록"
+kubectl apply -f k8s/argocd/application.yaml
+
+echo "==> 확인"
+kubectl get applications -n argocd
 echo
-echo "==> 갱신된 이미지로 재배포"
-kubectl apply -f k8s/sns-app/app.yaml
-kubectl rollout status deployment/sns-app -n sns --timeout=300s
-kubectl get deployment sns-app -n sns \
-    -o jsonpath='{.spec.template.spec.containers[0].image}'; echo
+echo "admin 비밀번호:"
+kubectl -n argocd get secret argocd-initial-admin-secret \
+    -o jsonpath="{.data.password}" | base64 -d; echo
