@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: sns-app
-          image: ghcr.io/apieceofcoding/sns-app:1563a58
+          image: ghcr.io/apieceofcoding/sns-app:1225b56
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
