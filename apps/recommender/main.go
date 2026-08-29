@@ -1,15 +1,3 @@
-// sns-recommender: 타임라인 후보 게시글을 사용자 세그먼트에 맞춰 재정렬하는 추천 서비스.
-//
-// sns-app 이 타임라인을 조회할 때 Redis 에서 뽑은 후보 postId 목록을 이 서비스로 보내고,
-// 재정렬된 순서를 돌려받는다. 상태를 갖지 않으므로 DB 도 캐시도 쓰지 않는다.
-//
-// 사용자는 릴리스 단계에 따라 두 세그먼트로 나뉜다.
-//
-//	ga    정식 출시된 안정 경로. 빠르다.
-//	beta  새 추천 모델을 먼저 적용하는 실험 경로. 아직 최적화가 안 되어 느리다.
-//
-// beta 가 느린 것은 의도한 설정이다. 장애가 전체가 아니라 일부 사용자에게만
-// 나타나야 메트릭, 트레이스, 로그를 이어야만 원인을 찾을 수 있기 때문이다.
 package main
 
 import (
@@ -42,7 +30,6 @@ import (
 const (
 	serviceName = "sns-recommender"
 
-	// 후보 목록 한 페이지치고는 넉넉한 상한이다.
 	maxRequestBodyBytes = 1 << 20
 )
 
@@ -76,7 +63,6 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	// 헬스체크는 otelhttp 바깥에 둔다. kubelet 이 주기적으로 부르므로 span 이 쌓이기만 한다.
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
@@ -109,14 +95,11 @@ func main() {
 	slog.Info("추천 서비스 정상 종료")
 }
 
-// rankHandler 는 후보 postId 목록을 받아 세그먼트별 지연을 흉내 낸 뒤 재정렬해 돌려준다.
 func rankHandler(cfg config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		span := trace.SpanFromContext(ctx)
 
-		// 본문 크기를 제한한다. 한 페이지의 후보 목록이라 1MB 를 넘을 이유가 없고,
-		// 제한이 없으면 큰 본문 하나로 메모리를 소진시킬 수 있다.
 		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
 
 		var req rankRequest
@@ -156,7 +139,6 @@ func rankHandler(cfg config) http.Handler {
 	})
 }
 
-// score 는 추천 모델 추론을 흉내 낸다. beta 경로는 최적화가 안 되어 오래 걸린다.
 func score(ctx context.Context, cfg config, segment string) {
 	_, span := otel.Tracer(serviceName).Start(ctx, "model-inference")
 	defer span.End()
@@ -176,8 +158,6 @@ func score(ctx context.Context, cfg config, segment string) {
 	time.Sleep(time.Duration(delay) * time.Millisecond)
 }
 
-// rank 는 (userId, postId) 조합으로 결정되는 점수 내림차순으로 정렬한다.
-// 같은 입력이면 항상 같은 순서가 나오므로 실습에서 재현할 수 있다.
 func rank(userID int64, postIDs []int64) []int64 {
 	ranked := make([]int64, len(postIDs))
 	copy(ranked, postIDs)
@@ -193,7 +173,6 @@ func affinity(userID, postID int64) uint32 {
 	return h.Sum32()
 }
 
-// segmentOf 는 사용자를 릴리스 단계로 나눈다. 3의 배수가 beta 로, 약 33% 가 실험 경로를 탄다.
 func segmentOf(userID int64) string {
 	if userID%3 == 0 {
 		return "beta"
@@ -201,8 +180,6 @@ func segmentOf(userID int64) string {
 	return "ga"
 }
 
-// logger 는 현재 span 의 traceId 를 로그에 붙인다. Loki 에서 로그를 보다가
-// 같은 traceId 의 트레이스로 이동할 수 있어야 하기 때문이다.
 func logger(ctx context.Context) *slog.Logger {
 	sc := trace.SpanContextFromContext(ctx)
 	if !sc.IsValid() {
@@ -237,7 +214,6 @@ func initTracer(otlpURL string) (func(context.Context), error) {
 	)
 	otel.SetTracerProvider(tp)
 
-	// sns-app 이 보낸 traceparent 헤더를 이어받으려면 W3C Trace Context 전파기가 필요하다.
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
 		propagation.Baggage{},
