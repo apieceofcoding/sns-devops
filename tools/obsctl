@@ -9,7 +9,7 @@ Claude Code 같은 에이전트가 장애 원인을 찾을 때 쓰라고 만든 
   obsctl logs '<logql>' [분]         Loki 범위 질의 (기본 15분)
   obsctl traces <service> [분]       Tempo 트레이스 검색 (기본 15분)
   obsctl trace <traceId>             트레이스 하나를 span 트리로
-  obsctl rca <service> [분]          위 셋을 한 번에 (RCA 시작점)
+  obsctl analyze <service> [분]      위 셋을 한 번에 (장애 분석 시작점)
 
 환경변수로 주소를 바꿀 수 있다.
   PROM_URL   기본 http://prometheus.localhost
@@ -140,14 +140,14 @@ def cmd_trace(argv):
                         print(f"           {key}={val}")
 
 
-# -------------------------------------------------------------------- rca
-def cmd_rca(argv):
+# -------------------------------------------------------------- analyze
+def cmd_analyze(argv):
     if not argv:
         die("서비스 이름이 필요합니다.")
     svc = argv[0]
     mins = minutes_arg(argv, 1)
 
-    print(f"# RCA: {svc} (최근 {mins}분)\n")
+    print(f"# 장애 분석: {svc} (최근 {mins}분)\n")
 
     print("## 1. 에러율 (메트릭)")
     cmd_metrics([
@@ -175,7 +175,7 @@ COMMANDS = {
     "logs": cmd_logs,
     "traces": cmd_traces,
     "trace": cmd_trace,
-    "rca": cmd_rca,
+    "analyze": cmd_analyze,
 }
 
 

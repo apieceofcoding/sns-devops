@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Phase 9. AI Agent 기반 RCA
+# Phase 9. AI Agent 기반 장애 분석
 # 사용법: ./run.sh [분]   (기본 30)
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -15,10 +15,10 @@ for name in prometheus loki tempo; do
 done
 
 echo
-echo "==> RCA 시작점 수집 (최근 ${MINS}분)"
-tools/obsctl rca sns-app "$MINS"
+echo "==> 장애 분석 시작점 수집 (최근 ${MINS}분)"
+tools/obsctl analyze sns-app "$MINS"
 
 echo
 echo "이제 Claude Code 에게 물어보세요."
 echo "  \"sns-app 에러율이 올랐는데 원인 찾아줘\""
-echo "rca 스킬이 이 CLI 로 세 신호를 이어서 원인을 좁힙니다."
+echo "장애 분석 스킬이 이 CLI 로 세 신호를 이어서 원인을 좁힙니다."

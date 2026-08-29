@@ -1,5 +1,5 @@
 ---
-name: rca
+name: incident-analysis
 description: 배포된 서비스에 장애가 났을 때 메트릭, 로그, 트레이스를 순서대로 조회해 근본 원인과 해결안을 찾는다. "에러율이 올랐다", "왜 실패하지", "장애 원인 찾아줘", "느려졌어", "5xx 나와" 같은 요청에 사용한다. obsctl CLI 로 Prometheus, Loki, Tempo 를 조회한다.
 ---
 
@@ -10,7 +10,7 @@ description: 배포된 서비스에 장애가 났을 때 메트릭, 로그, 트�
 `tools/obsctl` 이 관측 스택을 조회한다. 클러스터가 떠 있고 HTTPRoute 가 열려 있어야 한다.
 
 ```bash
-tools/obsctl rca sns-app
+tools/obsctl analyze sns-app
 ```
 
 주소가 다르면 `PROM_URL`, `LOKI_URL`, `TEMPO_URL` 로 바꾼다.
@@ -28,7 +28,7 @@ tools/obsctl rca sns-app
 ### 1. 범위 확인 (메트릭)
 
 ```bash
-tools/obsctl rca sns-app 30
+tools/obsctl analyze sns-app 30
 ```
 
 에러율과 엔드포인트별 에러 수를 본다. 여기서 **대상 엔드포인트 하나**를 특정한다.
@@ -36,7 +36,7 @@ tools/obsctl rca sns-app 30
 
 ### 2. 위치 확인 (트레이스)
 
-`rca` 출력의 트레이스 목록에서 가장 느린 traceID 를 고른다.
+`analyze` 출력의 트레이스 목록에서 가장 느린 traceID 를 고른다.
 
 ```bash
 tools/obsctl trace <traceId>
