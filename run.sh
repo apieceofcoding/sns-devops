@@ -15,6 +15,14 @@ for name in prometheus loki tempo; do
 done
 
 echo
+echo "==> 추천 서비스 확인 (beta 세그먼트 실패의 상대편입니다)"
+if kubectl get deployment sns-recommender -n sns >/dev/null 2>&1; then
+    kubectl rollout status deployment/sns-recommender -n sns --timeout=60s
+else
+    echo "  sns-recommender 가 없습니다. part-7 의 run.sh 를 먼저 실행하세요." >&2
+fi
+
+echo
 echo "==> 장애 분석 시작점 수집 (최근 ${MINS}분)"
 tools/obsctl analyze sns-app "$MINS"
 
