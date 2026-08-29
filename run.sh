@@ -8,6 +8,12 @@ PROFILE="${1:-lite}"
 VALUES=(-f k8s/monitoring/tempo-values.yaml)
 [ "$PROFILE" = full ] && VALUES+=(-f k8s/monitoring/tempo-values-full.yaml)
 
+echo "==> 추천 서비스 빌드와 배포 (Go)"
+docker build -t sns-recommender:latest apps/recommender
+kind load docker-image sns-recommender:latest --name sns-cluster
+kubectl apply -f k8s/sns-app/recommender.yaml
+kubectl rollout status deployment/sns-recommender -n sns --timeout=120s
+
 echo "==> Tempo 설치 ($PROFILE)"
 helm repo add grafana https://grafana.github.io/helm-charts >/dev/null 2>&1 || true
 helm repo update grafana >/dev/null
@@ -28,6 +34,12 @@ echo "==> 확인"
 kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=tempo -n monitoring --timeout=300s
 kubectl get pods -n monitoring -l app.kubernetes.io/name=tempo
 echo
-curl -fsS -o /dev/null http://sns.localhost/api/v1/demo/trace 2>/dev/null || true
+echo "==> 두 서비스에 걸친 트레이스 생성"
+curl -fsS -o /dev/null "http://sns.localhost/api/v1/demo/trace?userId=1" 2>/dev/null || true
 sleep 5
+
+echo "==> sns-app 트레이스 확인"
 curl -fsS "http://tempo.localhost/api/search?limit=5" | python3 -m json.tool || true
+
+echo "==> sns-recommender 트레이스 확인 (경계를 넘었는지)"
+curl -fsS "http://tempo.localhost/api/search?tags=service.name%3Dsns-recommender&limit=5" | python3 -m json.tool || true
