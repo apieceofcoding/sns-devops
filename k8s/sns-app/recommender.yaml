@@ -24,10 +24,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-            # sns-app 과 같은 노드의 OTel Collector 로 트레이스를 보낸다.
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://$(NODE_IP):4318
-            # ga 는 빠르고 beta 는 느리다. 09강 장애 시나리오가 이 차이를 이용한다.
             - name: FAST_MS
               value: "40"
             - name: SLOW_MS
@@ -46,8 +44,6 @@ spec:
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 20
-          # Go 정적 바이너리라 JVM 대비 메모리가 한 자릿수로 줄어든다.
-          # sns-app 이 requests 384Mi / limits 640Mi 인 것과 비교해 보면 차이가 분명하다.
           resources:
             requests:
               cpu: 10m

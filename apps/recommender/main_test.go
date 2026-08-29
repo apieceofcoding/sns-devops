@@ -95,8 +95,6 @@ func TestRankHandlerRejectsMissingUserID(t *testing.T) {
 	}
 }
 
-// sns-app 이 보낸 traceparent 를 이어받아 같은 trace 에 span 을 붙이는지 확인한다.
-// 이 강의에서 보여주려는 분산 트레이싱의 핵심이라 테스트로 고정한다.
 func TestIncomingTraceparentIsContinued(t *testing.T) {
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
