@@ -53,6 +53,11 @@ type rankResponse struct {
 	TookMs        int64   `json:"tookMs"`
 }
 
+type segmentResponse struct {
+	UserID  int64  `json:"userId"`
+	Segment string `json:"segment"`
+}
+
 func main() {
 	cfg := loadConfig()
 
@@ -67,6 +72,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
+	mux.Handle("GET /v1/segment", otelhttp.NewHandler(segmentHandler(), "GET /v1/segment"))
 	mux.Handle("POST /v1/rank", otelhttp.NewHandler(rankHandler(cfg), "POST /v1/rank"))
 
 	srv := &http.Server{
@@ -93,6 +99,24 @@ func main() {
 	_ = srv.Shutdown(ctx)
 	shutdown(ctx)
 	slog.Info("추천 서비스 정상 종료")
+}
+
+func segmentHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userID, err := strconv.ParseInt(r.URL.Query().Get("userId"), 10, 64)
+		if err != nil || userID <= 0 {
+			writeError(w, http.StatusBadRequest, "userId 가 필요합니다")
+			return
+		}
+
+		segment := segmentOf(userID)
+		trace.SpanFromContext(r.Context()).SetAttributes(
+			attribute.Int64("user.id", userID),
+			attribute.String("user.segment", segment),
+		)
+
+		writeJSON(w, http.StatusOK, segmentResponse{UserID: userID, Segment: segment})
+	})
 }
 
 func rankHandler(cfg config) http.Handler {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sort"
+	"strconv"
 	"testing"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -81,6 +82,54 @@ func TestRankHandlerResponse(t *testing.T) {
 	}
 	if len(resp.RankedPostIDs) != 3 {
 		t.Errorf("후보 3 개를 기대했지만 %v", resp.RankedPostIDs)
+	}
+}
+
+func TestSegmentHandlerResponse(t *testing.T) {
+	rec := httptest.NewRecorder()
+
+	segmentHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/v1/segment?userId=3", nil))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("200 을 기대했지만 %d", rec.Code)
+	}
+	var resp segmentResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("응답을 읽을 수 없습니다: %v", err)
+	}
+	if resp.UserID != 3 || resp.Segment != "beta" {
+		t.Errorf("userId 3 은 beta 여야 하는데 %+v", resp)
+	}
+}
+
+func TestSegmentHandlerRejectsInvalidUserID(t *testing.T) {
+	for _, query := range []string{"", "?userId=", "?userId=abc", "?userId=0", "?userId=-1"} {
+		rec := httptest.NewRecorder()
+
+		segmentHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/v1/segment"+query, nil))
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("%q: 400 을 기대했지만 %d", query, rec.Code)
+		}
+	}
+}
+
+func TestSegmentHandlerAgreesWithRankHandler(t *testing.T) {
+	for _, userID := range []int64{1, 2, 3, 4, 6, 9, 100} {
+		rec := httptest.NewRecorder()
+		segmentHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/v1/segment?userId="+strconv.FormatInt(userID, 10), nil))
+		var lookup segmentResponse
+		_ = json.Unmarshal(rec.Body.Bytes(), &lookup)
+
+		body, _ := json.Marshal(rankRequest{UserID: userID, PostIDs: []int64{101}})
+		rec = httptest.NewRecorder()
+		rankHandler(testConfig).ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/v1/rank", bytes.NewReader(body)))
+		var ranked rankResponse
+		_ = json.Unmarshal(rec.Body.Bytes(), &ranked)
+
+		if lookup.Segment != ranked.Segment {
+			t.Errorf("userId %d: 조회는 %q 인데 랭킹은 %q", userID, lookup.Segment, ranked.Segment)
+		}
 	}
 }
 
