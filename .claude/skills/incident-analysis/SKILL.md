@@ -39,7 +39,7 @@ tools/obsctl analyze sns-app 30
 `analyze` 출력의 트레이스 목록에서 가장 느린 traceID 를 고른다.
 
 ```bash
-tools/obsctl trace <traceId>
+tools/obsctl traces <traceId>
 ```
 
 span 트리에서 시간을 대부분 쓰는 구간과 `ERROR` 표시를 찾는다.
@@ -51,7 +51,7 @@ span 속성(`user.*`, `timeout.*`, `upstream.*`)이 가설의 재료다.
 특정 조건에만 걸린 것인지 가른다.
 
 ```bash
-tools/obsctl logs '{service_name="sns-app"} |= "ERROR"' 30
+tools/obsctl logs '{service_name="sns-app"} | detected_level="error"' 30
 tools/obsctl logs '{service_name="sns-app"} |= "segment=beta"' 30
 ```
 
