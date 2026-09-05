@@ -5,6 +5,16 @@ set -euo pipefail
 cd "$(dirname "$0")"
 PROFILE="${1:-lite}"
 
+# JSON 을 보기 좋게 출력합니다. 윈도우에는 python3 라는 이름이 없는 경우가 많아
+# jq, python3, python 순으로 있는 것을 쓰고, 셋 다 없으면 원문을 그대로 냅니다.
+json_pp() {
+    if command -v jq >/dev/null 2>&1; then jq .
+    elif command -v python3 >/dev/null 2>&1; then python3 -m json.tool
+    elif command -v python >/dev/null 2>&1; then python -m json.tool
+    else cat
+    fi
+}
+
 VALUES=(-f k8s/monitoring/tempo-values.yaml)
 [ "$PROFILE" = full ] && VALUES+=(-f k8s/monitoring/tempo-values-full.yaml)
 
@@ -39,7 +49,7 @@ curl -fsS -o /dev/null "http://sns.localhost/api/v1/demo/trace?userId=1" 2>/dev/
 sleep 5
 
 echo "==> sns-app 트레이스 확인"
-curl -fsS "http://tempo.localhost/api/search?limit=5" | python3 -m json.tool || true
+curl -fsS "http://tempo.localhost/api/search?limit=5" | json_pp || true
 
 echo "==> sns-recommender 트레이스 확인 (경계를 넘었는지)"
-curl -fsS "http://tempo.localhost/api/search?tags=service.name%3Dsns-recommender&limit=5" | python3 -m json.tool || true
+curl -fsS "http://tempo.localhost/api/search?tags=service.name%3Dsns-recommender&limit=5" | json_pp || true
