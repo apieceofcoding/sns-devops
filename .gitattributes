@@ -1,0 +1,4 @@
+# 윈도우(Git Bash)에서 CRLF 로 체크아웃되면 셰뱅이 깨지므로 실행 파일은 LF 로 고정합니다.
+*.sh text eol=lf
+tools/obsctl text eol=lf
+*.yaml text eol=lf
