@@ -6,13 +6,25 @@ cd "$(dirname "$0")"
 PROFILE="${1:-lite}"
 CLUSTER=sns-cluster
 
+# 윈도우는 *.localhost 를 자동으로 127.0.0.1 로 풀지 않습니다. 안 될 때 안내할 위치를 고릅니다.
+hosts_hint() {
+    case "$(uname -s)" in
+        MINGW* | MSYS* | CYGWIN*) file='C:\Windows\System32\drivers\etc\hosts (관리자 권한)' ;;
+        *) file='/etc/hosts (sudo)' ;;
+    esac
+    echo "  이름이 풀리지 않으면 $file 에 아래 줄을 추가하세요." >&2
+    echo "  127.0.0.1 sns.localhost grafana.localhost prometheus.localhost loki.localhost tempo.localhost argocd.localhost" >&2
+}
+
 if ! docker image inspect springboot-sns:latest >/dev/null 2>&1; then
     echo "springboot-sns:latest 이미지가 없습니다." >&2
     echo "먼저 sns-app 에서 실행하세요: git -C ../sns-app checkout part-2-kind-deployment && (cd ../sns-app && ./run.sh)" >&2
     exit 1
 fi
 
-if kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
+# 파이프로 grep -q 에 넘기면 kind 가 SIGPIPE 로 죽어 pipefail 이 실패로 판정할 수 있습니다.
+clusters=$(kind get clusters 2>/dev/null || true)
+if grep -qx "$CLUSTER" <<<"$clusters"; then
     echo "==> 클러스터 $CLUSTER 이미 존재, 생성 건너뜀"
 else
     echo "==> 클러스터 생성 ($PROFILE)"
@@ -51,4 +63,10 @@ kubectl rollout status deployment/sns-app -n sns --timeout=300s
 echo "==> 확인"
 kubectl wait --for=condition=Ready pod -l app=sns-app -n sns --timeout=180s
 kubectl get pods -n sns
-curl -fsS http://sns.localhost/actuator/health; echo
+if curl -fsS http://sns.localhost/actuator/health; then
+    echo
+else
+    echo "http://sns.localhost 에 접근할 수 없습니다." >&2
+    hosts_hint
+    exit 1
+fi
