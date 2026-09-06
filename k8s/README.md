@@ -204,6 +204,15 @@ kubectl apply -f k8s/ingress/monitoring.yaml
 
 full 은 마지막 `-f` 뒤에 `-f k8s/monitoring/kube-prometheus-values-full.yaml` 을 추가합니다.
 
+HTTPRoute 는 대상 Service 를 만드는 강의에서 각각 추가합니다. 05강은 Grafana 와
+Prometheus 두 개이고, Loki 와 Tempo 는 06~07강에서 붙입니다.
+
+```bash
+kubectl get httproute -n monitoring
+```
+
+`Accepted` 와 `ResolvedRefs` 가 모두 True 여야 합니다.
+
 ### 4-5. Loki + OTel Collector + Tempo (06~07강)
 
 ```bash
