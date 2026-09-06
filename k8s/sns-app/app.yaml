@@ -51,6 +51,8 @@ spec:
                 secretKeyRef:
                   name: sns-secret
                   key: rustfs-secret-key
+            - name: RECOMMENDER_BASE_URL
+              value: http://sns-recommender.sns.svc.cluster.local:8080
             - name: NODE_IP
               valueFrom:
                 fieldRef:
