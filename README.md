@@ -1,6 +1,6 @@
 # sns-devops
 
-> 현재 브랜치는 06강 완료본입니다. 직접 따라 만들려면 `main`에서 시작하세요.
+> 현재 브랜치는 07강 완료본입니다. 직접 따라 만들려면 `main`에서 시작하세요.
 > 완료본의 실행 방법은 [scripts/README.md](scripts/README.md)를 참고해요. 아래 기본 앱과 시작 골격 안내는 `main` 기준입니다.
 
 배포와 관측 가능성 강의에서 Kubernetes 매니페스트와 Helm values를 작성하는 저장소입니다.
