@@ -42,7 +42,7 @@ sns-devops/
 
 | 단계 | 추가할 내용 |
 | --- | --- |
-| 02 | `k8s/kind/`, `k8s/ingress/`, `k8s/sns-app/` |
+| 02 | `k8s/kind/`, `k8s/gateway/`, `k8s/sns-app/` |
 | 03 | CI가 `k8s/sns-app/app.yaml`의 이미지 태그를 갱신하도록 연결 |
 | 04 | `k8s/argocd/` |
 | 05 ~ 08 | `k8s/monitoring/`, 추천 서비스, 로그와 트레이스, 경보 설정 |
