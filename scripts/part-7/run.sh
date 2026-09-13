@@ -11,7 +11,7 @@ require_files apps/recommender/Dockerfile \
     k8s/sns-app/recommender.yaml \
     k8s/monitoring/tempo-values.yaml \
     k8s/monitoring/otel-collector-values.yaml \
-    k8s/ingress/tempo.yaml
+    k8s/gateway/tempo.yaml
 PROFILE="${1:-lite}"
 require_profile "$PROFILE"
 if [ "$PROFILE" = full ]; then require_files k8s/monitoring/tempo-values-full.yaml; fi
@@ -49,7 +49,7 @@ helm upgrade otel-collector open-telemetry/opentelemetry-collector \
     -f k8s/monitoring/otel-collector-values.yaml
 
 echo "==> HTTPRoute 적용"
-kubectl apply -f k8s/ingress/tempo.yaml
+kubectl apply -f k8s/gateway/tempo.yaml
 
 echo "==> 확인"
 kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=tempo -n monitoring --timeout=300s

@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/common.sh
 require_files k8s/monitoring/kube-prometheus-values.yaml \
-    k8s/ingress/monitoring.yaml \
+    k8s/gateway/monitoring.yaml \
     k8s/monitoring/servicemonitor.yaml
 PROFILE="${1:-lite}"
 require_profile "$PROFILE"
@@ -23,7 +23,7 @@ helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
     "${VALUES[@]}"
 
 echo "==> HTTPRoute 와 ServiceMonitor 적용"
-kubectl apply -f k8s/ingress/monitoring.yaml
+kubectl apply -f k8s/gateway/monitoring.yaml
 kubectl apply -f k8s/monitoring/servicemonitor.yaml
 
 echo "==> 확인"
