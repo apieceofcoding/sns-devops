@@ -5,10 +5,17 @@ Kind 클러스터 설정, Kubernetes 매니페스트, Helm values를 관리합�
 
 ## 1) 사전 준비
 
-- Docker Desktop
-- `kubectl`
-- `kind`
-- `helm`
+macOS는 [Homebrew](https://brew.sh/ko/)를 먼저 설치한 뒤 터미널에서, Windows는 PowerShell에서 아래 명령을 실행하세요.
+Windows에서 `winget`이 없다면 Microsoft Store에서 **앱 설치 관리자**를 설치하면 됩니다.
+
+| 도구 | macOS | Windows |
+| --- | --- | --- |
+| Docker Desktop | [공식 설치 파일](https://docs.docker.com/desktop/setup/install/mac-install/)에서 내 Mac의 칩(Apple Silicon 또는 Intel)에 맞는 파일을 받아 설치하고 실행해요. | [공식 설치 파일](https://docs.docker.com/desktop/setup/install/windows-install/)을 실행하고, WSL 2 사용 옵션을 선택해 설치한 뒤 실행합니다. |
+| `kubectl` | `brew install kubernetes-cli` | `winget install -e --id Kubernetes.kubectl` |
+| `kind` | `brew install kind` | `winget install -e --id Kubernetes.kind` |
+| `helm` | `brew install helm` | `winget install -e --id Helm.Helm` |
+
+설치가 끝나면 터미널을 다시 열고 아래 명령으로 확인해요.
 
 확인 명령:
 
