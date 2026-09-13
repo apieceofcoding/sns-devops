@@ -71,7 +71,7 @@ k8s/
 ├── kind/
 │   ├── kind-config.yaml           # lite 기본 (control-plane only)
 │   └── kind-config-full.yaml      # full (control-plane + 2 workers)
-├── ingress/
+├── gateway/
 │   ├── traefik-values.yaml        # Traefik Helm values (Gateway API provider)
 │   ├── sns-app.yaml               # sns, rustfs HTTPRoute (02강)
 │   ├── monitoring.yaml            # grafana, prometheus HTTPRoute (05강)
@@ -136,7 +136,7 @@ helm repo add traefik https://traefik.github.io/charts
 helm repo update
 
 helm install traefik traefik/traefik --version 41.2.0 -n traefik --create-namespace \
-  -f k8s/ingress/traefik-values.yaml
+  -f k8s/gateway/traefik-values.yaml
 ```
 
 차트가 `GatewayClass` 와 기본 `Gateway`(`traefik` 네임스페이스의 `traefik-gateway`)를
@@ -161,7 +161,7 @@ kubectl apply -f k8s/sns-app/postgres.yaml \
   -f k8s/sns-app/redis.yaml \
   -f k8s/sns-app/rustfs.yaml
 kubectl apply -f k8s/sns-app/app.yaml
-kubectl apply -f k8s/ingress/sns-app.yaml
+kubectl apply -f k8s/gateway/sns-app.yaml
 ```
 
 ### 4-3. ArgoCD (04강)
@@ -199,7 +199,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack --version 88.
 
 kubectl apply -f k8s/monitoring/servicemonitor.yaml
 kubectl apply -f k8s/monitoring/alertrules.yaml
-kubectl apply -f k8s/ingress/monitoring.yaml
+kubectl apply -f k8s/gateway/monitoring.yaml
 ```
 
 full 은 마지막 `-f` 뒤에 `-f k8s/monitoring/kube-prometheus-values-full.yaml` 을 추가합니다.
@@ -220,8 +220,8 @@ helm install otel-collector open-telemetry/opentelemetry-collector --version 0.1
 helm install tempo grafana/tempo --version 1.24.4 -n monitoring \
   -f k8s/monitoring/tempo-values.yaml
 
-kubectl apply -f k8s/ingress/loki.yaml
-kubectl apply -f k8s/ingress/tempo.yaml
+kubectl apply -f k8s/gateway/loki.yaml
+kubectl apply -f k8s/gateway/tempo.yaml
 ```
 
 Tempo 를 full 로 진행하면 마지막 `-f` 뒤에 `-f k8s/monitoring/tempo-values-full.yaml` 을
