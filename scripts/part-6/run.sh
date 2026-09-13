@@ -6,7 +6,7 @@ cd "$(dirname "$0")/../.."
 source scripts/common.sh
 require_files k8s/monitoring/loki-values.yaml \
     k8s/monitoring/otel-collector-values.yaml \
-    k8s/ingress/loki.yaml
+    k8s/gateway/loki.yaml
 
 # JSON 을 보기 좋게 출력합니다. 윈도우에는 python3 라는 이름이 없는 경우가 많아
 # jq, python3, python 순으로 있는 것을 쓰고, 셋 다 없으면 원문을 그대로 냅니다.
@@ -35,7 +35,7 @@ helm upgrade --install otel-collector open-telemetry/opentelemetry-collector \
     -f k8s/monitoring/otel-collector-values.yaml
 
 echo "==> HTTPRoute 적용"
-kubectl apply -f k8s/ingress/loki.yaml
+kubectl apply -f k8s/gateway/loki.yaml
 
 echo "==> 확인"
 kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=loki -n monitoring --timeout=300s

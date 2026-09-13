@@ -5,14 +5,14 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/common.sh
 require_files k8s/kind/kind-config.yaml \
-    k8s/ingress/traefik-values.yaml \
+    k8s/gateway/traefik-values.yaml \
     k8s/sns-app/namespace.yaml \
     k8s/sns-app/secret.yaml \
     k8s/sns-app/postgres.yaml \
     k8s/sns-app/redis.yaml \
     k8s/sns-app/rustfs.yaml \
     k8s/sns-app/app.yaml \
-    k8s/ingress/sns-app.yaml
+    k8s/gateway/sns-app.yaml
 PROFILE="${1:-lite}"
 require_profile "$PROFILE"
 if [ "$PROFILE" = full ]; then require_files k8s/kind/kind-config-full.yaml; fi
@@ -58,7 +58,7 @@ helm repo add traefik https://traefik.github.io/charts >/dev/null 2>&1 || true
 helm repo update traefik >/dev/null
 helm upgrade --install traefik traefik/traefik --version 41.2.0 \
     --namespace traefik --create-namespace \
-    --values k8s/ingress/traefik-values.yaml
+    --values k8s/gateway/traefik-values.yaml
 
 echo "==> 매니페스트 적용"
 kubectl apply -f k8s/sns-app/namespace.yaml
@@ -67,7 +67,7 @@ kubectl apply -f k8s/sns-app/postgres.yaml \
     -f k8s/sns-app/redis.yaml \
     -f k8s/sns-app/rustfs.yaml
 kubectl apply -f k8s/sns-app/app.yaml
-kubectl apply -f k8s/ingress/sns-app.yaml
+kubectl apply -f k8s/gateway/sns-app.yaml
 
 echo "==> 롤아웃 대기"
 kubectl rollout status deployment/sns-app -n sns --timeout=300s
