@@ -99,7 +99,6 @@ k8s/
 │   └── servicemonitor.yaml        # sns-app ServiceMonitor
 └── sns-app/
     ├── namespace.yaml
-    ├── secret.yaml
     ├── postgres.yaml
     ├── redis.yaml
     ├── rustfs.yaml
@@ -163,7 +162,6 @@ HTTPRoute 는 대상 네임스페이스가 만들어진 뒤에 적용합니다. 
 
 ```bash
 kubectl apply -f k8s/sns-app/namespace.yaml
-kubectl apply -f k8s/sns-app/secret.yaml
 kubectl apply -f k8s/sns-app/postgres.yaml \
   -f k8s/sns-app/redis.yaml \
   -f k8s/sns-app/rustfs.yaml
