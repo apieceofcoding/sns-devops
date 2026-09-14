@@ -161,6 +161,9 @@ HTTPRoute 는 대상 네임스페이스가 만들어진 뒤에 적용합니다. 
 ### 4-2. 애플리케이션 배포 (02강)
 
 ```bash
+# 로컬에서 빌드한 앱 이미지를 kind 노드에 적재합니다.
+kind load docker-image springboot-sns:latest --name sns-cluster
+
 kubectl apply -f k8s/sns-app/namespace.yaml
 kubectl apply -f k8s/sns-app/postgres.yaml \
   -f k8s/sns-app/redis.yaml \
