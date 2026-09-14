@@ -7,7 +7,6 @@ source scripts/common.sh
 require_files k8s/kind/kind-config.yaml \
     k8s/gateway/traefik-values.yaml \
     k8s/sns-app/namespace.yaml \
-    k8s/sns-app/secret.yaml \
     k8s/sns-app/postgres.yaml \
     k8s/sns-app/redis.yaml \
     k8s/sns-app/rustfs.yaml \
@@ -62,7 +61,6 @@ helm upgrade --install traefik traefik/traefik --version 41.2.0 \
 
 echo "==> 매니페스트 적용"
 kubectl apply -f k8s/sns-app/namespace.yaml
-kubectl apply -f k8s/sns-app/secret.yaml
 kubectl apply -f k8s/sns-app/postgres.yaml \
     -f k8s/sns-app/redis.yaml \
     -f k8s/sns-app/rustfs.yaml
