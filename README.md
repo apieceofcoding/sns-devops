@@ -1,7 +1,7 @@
 # sns-devops
 
 배포와 관측 가능성 강의에서 Kubernetes 매니페스트와 Helm values를 작성하는 저장소입니다.
-`main`에는 실습 안내, 전체 실행 스크립트와 최종 안내를 담은 `k8s/` 디렉터리가 있어요. 배포 설정은 02강부터 직접 추가합니다.
+`main`에는 실습 안내, 전체 실행 스크립트와 빈 `k8s/` 디렉터리가 있어요. 배포 설정은 02강부터 직접 추가합니다.
 
 ## 실습 방식
 
@@ -29,11 +29,10 @@ sns-devops/
 │   ├── ...
 │   └── part-9/run.sh
 └── k8s/
-    ├── README.md
     └── .gitkeep
 ```
 
-전체 Kubernetes 실습 안내는 [k8s/README.md](k8s/README.md)에 있습니다. 모든 브랜치에서 같은 최종 안내를 제공해요.
+전체 Kubernetes 실습 안내는 [part-2의 k8s/README.md](https://github.com/apieceofcoding/sns-devops/blob/part-2-kind-deployment/k8s/README.md)에 있습니다. `part-2`부터 마지막 브랜치까지 같은 최종 안내를 제공해요.
 01강에서는 `sns-app`만 실행합니다. 이 저장소에는 실행 스크립트가 준비되어 있고, 매니페스트는 02강부터 작성해요.
 
 02강부터 Docker, `kind`, `kubectl`, `helm`을 준비하고 다음 설정을 작성해요.
