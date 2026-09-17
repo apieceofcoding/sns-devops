@@ -3,6 +3,13 @@
 Kind 클러스터 설정, Kubernetes 매니페스트, Helm values를 관리합니다.
 학습자 기준으로 "복붙 가능한 실행 순서 + 검증 포인트"를 먼저 제공합니다.
 
+이 문서는 전체 강의의 최종 안내이며, `main`과 모든 `part-*` 브랜치에서 같은 내용을 사용합니다.
+`main`에는 안내와 실행 스크립트가 먼저 제공되어 있어요. 아래 설정 파일은 해당 단원에서 작성한 뒤 명령을 실행합니다.
+완료본을 참고할 때도 현재 단원까지 준비된 파일과 환경에 맞는 명령만 실행하세요.
+
+명령은 `sns-devops` 루트 폴더 기준입니다. 단원 폴더에서 실행하는 스크립트 사용법은 [scripts/README.md](../scripts/README.md)를 참고해요.
+
+
 ## 1) 사전 준비
 
 macOS는 [Homebrew](https://brew.sh/ko/)를 먼저 설치한 뒤 터미널에서, Windows는 PowerShell에서 아래 명령을 실행하세요.
@@ -102,6 +109,7 @@ k8s/
     ├── postgres.yaml
     ├── redis.yaml
     ├── rustfs.yaml
+    ├── recommender.yaml          # 추천 서비스 (07강)
     └── app.yaml
 ```
 
@@ -206,11 +214,19 @@ helm install prometheus prometheus-community/kube-prometheus-stack --version 88.
   -f k8s/monitoring/kube-prometheus-values.yaml
 
 kubectl apply -f k8s/monitoring/servicemonitor.yaml
-kubectl apply -f k8s/monitoring/alertrules.yaml
 kubectl apply -f k8s/gateway/monitoring.yaml
 ```
 
 full 은 마지막 `-f` 뒤에 `-f k8s/monitoring/kube-prometheus-values-full.yaml` 을 추가합니다.
+
+HTTPRoute 는 대상 Service 를 만드는 강의에서 각각 추가합니다. 05강은 Grafana 와
+Prometheus 두 개이고, Loki 와 Tempo 는 06~07강에서 붙입니다.
+
+```bash
+kubectl get httproute -n monitoring
+```
+
+`Accepted` 와 `ResolvedRefs` 가 모두 True 여야 합니다.
 
 ### 4-5. Loki + OTel Collector + Tempo (06~07강)
 
@@ -236,6 +252,12 @@ Tempo 를 full 로 진행하면 마지막 `-f` 뒤에 `-f k8s/monitoring/tempo-v
 추가합니다. metrics-generator 가 켜지고 Grafana Explore Traces 를 쓸 수 있어요.
 
 ### 4-6. AlertManager Slack 연동 (08강)
+
+08강에서 작성한 경보 규칙을 적용합니다.
+
+```bash
+kubectl apply -f k8s/monitoring/alertrules.yaml
+```
 
 `slack-webhook` secret 을 만든 뒤 values 를 적용하세요.
 
