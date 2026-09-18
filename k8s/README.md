@@ -95,7 +95,6 @@ k8s/
 │   ├── argocd-values.yaml         # ArgoCD Helm values
 │   └── application.yaml           # ArgoCD Application CRD
 ├── monitoring/
-│   ├── alertrules.yaml            # PrometheusRule (에러율, 레이턴시, 다운)
 │   ├── alertmanager-values.yaml   # AlertManager Slack 연동
 │   ├── kube-prometheus-values.yaml       # lite 기본
 │   ├── kube-prometheus-values-full.yaml  # full
@@ -253,11 +252,7 @@ Tempo 를 full 로 진행하면 마지막 `-f` 뒤에 `-f k8s/monitoring/tempo-v
 
 ### 4-6. AlertManager Slack 연동 (08강)
 
-08강에서 작성한 경보 규칙을 적용합니다.
-
-```bash
-kubectl apply -f k8s/monitoring/alertrules.yaml
-```
+경보 규칙은 08강에서 추가하고 적용합니다. 05강에서는 경보 규칙 적용을 실행하지 않으며, 아래 Slack 연동도 08강에서 진행해요.
 
 `slack-webhook` secret 을 만든 뒤 values 를 적용하세요.
 
