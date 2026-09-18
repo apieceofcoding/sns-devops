@@ -227,7 +227,10 @@ kubectl get httproute -n monitoring
 
 `Accepted` 와 `ResolvedRefs` 가 모두 True 여야 합니다.
 
-### 4-5. Loki + OTel Collector + Tempo (06~07강)
+### 4-5. Loki + OTel Collector (06강)
+
+06강에서는 Loki와 OTel Collector를 설치해 로그를 수집합니다.
+Collector가 수집한 로그를 Loki로 보내도록 설정해요.
 
 ```bash
 helm repo add grafana https://grafana.github.io/helm-charts
@@ -240,17 +243,31 @@ helm install loki grafana/loki --version 7.3.0 -n monitoring \
 helm install otel-collector open-telemetry/opentelemetry-collector --version 0.169.0 \
   -n monitoring -f k8s/monitoring/otel-collector-values.yaml
 
+kubectl apply -f k8s/gateway/loki.yaml
+```
+
+### 4-6. Tempo + OTel Collector 확장 (07강)
+
+07강에서는 Tempo를 설치하고, 06강에서 설치한 Collector에 트레이스 수집을 추가합니다.
+`part-7-traces` 브랜치의 values 파일로 기존 Collector를 갱신하면 로그 수집을 유지하면서
+트레이스를 Tempo로 보낼 수 있어요.
+
+```bash
 helm install tempo grafana/tempo --version 1.24.4 -n monitoring \
   -f k8s/monitoring/tempo-values.yaml
+```
 
-kubectl apply -f k8s/gateway/loki.yaml
+Tempo를 full로 진행하면 위 설치 명령에 `-f k8s/monitoring/tempo-values-full.yaml`을
+추가합니다. metrics-generator가 켜져 트레이스 기반 메트릭을 추가로 생성해요.
+
+```bash
+helm upgrade otel-collector open-telemetry/opentelemetry-collector --version 0.169.0 \
+  -n monitoring -f k8s/monitoring/otel-collector-values.yaml
+
 kubectl apply -f k8s/gateway/tempo.yaml
 ```
 
-Tempo 를 full 로 진행하면 마지막 `-f` 뒤에 `-f k8s/monitoring/tempo-values-full.yaml` 을
-추가합니다. metrics-generator 가 켜지고 Grafana Explore Traces 를 쓸 수 있어요.
-
-### 4-6. AlertManager Slack 연동 (08강)
+### 4-7. AlertManager Slack 연동 (08강)
 
 경보 규칙은 08강에서 추가하고 적용합니다. 05강에서는 경보 규칙 적용을 실행하지 않으며, 아래 Slack 연동도 08강에서 진행해요.
 
