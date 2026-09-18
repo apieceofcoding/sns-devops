@@ -32,7 +32,7 @@
   "id": null,
   "uid": "sns-app-red",
   "title": "SNS App RED",
-  "description": "SNS 앱의 요청량, 5xx 오류율, 평균 응답 시간을 전체와 API별로 확인합니다. 최근 5분 기준이며 /actuator/health 경로와 정확히 일치하는 요청만 제외해요. 수집 간격은 30초입니다.",
+  "description": "SNS 앱의 R(초당 요청량), E(5xx 오류율), D(평균 응답 시간)를 확인합니다. 최근 5분 기준이며 /actuator/health 요청만 제외해요.",
   "tags": [
     "sns-app",
     "RED",
@@ -60,14 +60,14 @@
     {
       "id": 1,
       "type": "timeseries",
-      "title": "전체 요청량",
+      "title": "R | 초당 요청량",
       "description": "최근 5분의 평균 초당 요청 수입니다. /actuator/health 경로와 정확히 일치하는 요청만 제외합니다.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
-        "h": 9,
+        "h": 10,
         "w": 8,
         "x": 0,
         "y": 0
@@ -92,7 +92,8 @@
           "min": 0,
           "decimals": 2,
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "blue"
           },
           "custom": {
             "drawStyle": "line",
@@ -117,11 +118,11 @@
       },
       "options": {
         "tooltip": {
-          "mode": "multi",
+          "mode": "single",
           "sort": "desc"
         },
         "legend": {
-          "showLegend": true,
+          "showLegend": false,
           "displayMode": "list",
           "placement": "bottom",
           "calcs": []
@@ -131,14 +132,14 @@
     {
       "id": 2,
       "type": "timeseries",
-      "title": "전체 5xx 오류율",
+      "title": "E | 5xx 오류율",
       "description": "최근 5분 요청 중 HTTP 5xx의 비율입니다. 4xx는 포함하지 않아요. 요청이 없으면 비율을 표시하지 않습니다. /actuator/health 경로와 정확히 일치하는 요청만 제외합니다.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
-        "h": 9,
+        "h": 10,
         "w": 8,
         "x": 8,
         "y": 0
@@ -163,7 +164,8 @@
           "min": 0,
           "decimals": 2,
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "red"
           },
           "custom": {
             "drawStyle": "line",
@@ -189,11 +191,11 @@
       },
       "options": {
         "tooltip": {
-          "mode": "multi",
+          "mode": "single",
           "sort": "desc"
         },
         "legend": {
-          "showLegend": true,
+          "showLegend": false,
           "displayMode": "list",
           "placement": "bottom",
           "calcs": []
@@ -203,14 +205,14 @@
     {
       "id": 3,
       "type": "timeseries",
-      "title": "전체 평균 응답 시간",
+      "title": "D | 평균 응답 시간",
       "description": "최근 5분의 처리 시간 합계를 요청 수로 나눈 평균입니다. 요청이 없으면 표시하지 않아요. /actuator/health 경로와 정확히 일치하는 요청만 제외합니다.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
-        "h": 9,
+        "h": 10,
         "w": 8,
         "x": 16,
         "y": 0
@@ -235,7 +237,8 @@
           "min": 0,
           "decimals": 2,
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "green"
           },
           "custom": {
             "drawStyle": "line",
@@ -260,225 +263,11 @@
       },
       "options": {
         "tooltip": {
-          "mode": "multi",
+          "mode": "single",
           "sort": "desc"
         },
         "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": []
-        }
-      }
-    },
-    {
-      "id": 4,
-      "type": "timeseries",
-      "title": "API별 요청량",
-      "description": "최근 5분의 평균 초당 요청 수입니다. /actuator/health 경로와 정확히 일치하는 요청만 제외합니다.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 0,
-        "y": 9
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "sum by (method, uri)(rate(http_server_requests_seconds_count{namespace=\"sns\", service=\"sns-app\", uri!=\"/actuator/health\"}[5m]))",
-          "editorMode": "code",
-          "legendFormat": "{{method}} {{uri}}",
-          "range": true,
-          "instant": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "min": 0,
-          "decimals": 2,
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": []
-        }
-      }
-    },
-    {
-      "id": 5,
-      "type": "timeseries",
-      "title": "API별 5xx 오류율",
-      "description": "최근 5분 요청 중 HTTP 5xx의 비율입니다. 4xx는 포함하지 않아요. 요청이 없으면 비율을 표시하지 않습니다. /actuator/health 경로와 정확히 일치하는 요청만 제외합니다.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 8,
-        "y": 9
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "100 * (sum by (method, uri)(rate(http_server_requests_seconds_count{namespace=\"sns\", service=\"sns-app\", uri!=\"/actuator/health\", status=~\"5..\"}[5m])) or (0 * sum by (method, uri)(rate(http_server_requests_seconds_count{namespace=\"sns\", service=\"sns-app\", uri!=\"/actuator/health\"}[5m])))) / (sum by (method, uri)(rate(http_server_requests_seconds_count{namespace=\"sns\", service=\"sns-app\", uri!=\"/actuator/health\"}[5m])) > 0)",
-          "editorMode": "code",
-          "legendFormat": "{{method}} {{uri}}",
-          "range": true,
-          "instant": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "decimals": 2,
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
-          },
-          "max": 100
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": []
-        }
-      }
-    },
-    {
-      "id": 6,
-      "type": "timeseries",
-      "title": "API별 평균 응답 시간",
-      "description": "최근 5분의 처리 시간 합계를 요청 수로 나눈 평균입니다. 요청이 없으면 표시하지 않아요. /actuator/health 경로와 정확히 일치하는 요청만 제외합니다.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 16,
-        "y": 9
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "1000 * sum by (method, uri)(rate(http_server_requests_seconds_sum{namespace=\"sns\", service=\"sns-app\", uri!=\"/actuator/health\"}[5m])) / (sum by (method, uri)(rate(http_server_requests_seconds_count{namespace=\"sns\", service=\"sns-app\", uri!=\"/actuator/health\"}[5m])) > 0)",
-          "editorMode": "code",
-          "legendFormat": "{{method}} {{uri}}",
-          "range": true,
-          "instant": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ms",
-          "min": 0,
-          "decimals": 2,
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        },
-        "legend": {
-          "showLegend": true,
+          "showLegend": false,
           "displayMode": "list",
           "placement": "bottom",
           "calcs": []
