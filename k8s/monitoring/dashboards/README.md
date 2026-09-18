@@ -18,5 +18,3 @@ management:
     tags:
       application: sns-app
 ```
-
-Spring Boot 4.1에서는 일부 쿼리 조정이 필요할 수 있어요. 일부 프로세스 메모리 패널은 `micrometer-jvm-extras`가 필요합니다.
