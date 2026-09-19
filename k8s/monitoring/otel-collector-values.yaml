@@ -8,6 +8,7 @@ presets:
   logsCollection:
     enabled: true
     includeCollectorLogs: false
+    storeCheckpoints: true
   kubernetesAttributes:
     enabled: true
     extractAllPodLabels: true
@@ -21,22 +22,78 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+# 로그는 노드 파일에서 읽고, 트레이스는 OTLP로 받습니다.
+ports:
+  otlp:
+    enabled: true
+  otlp-http:
+    enabled: true
+  jaeger-compact:
+    enabled: false
+  jaeger-thrift:
+    enabled: false
+  jaeger-grpc:
+    enabled: false
+  zipkin:
+    enabled: false
+
 config:
   receivers:
-    file_log:
-      exclude:
-        - /var/log/pods/monitoring_otel-collector-opentelemetry-collector*_*/opentelemetry-collector/*.log
-        - /var/log/pods/sns_sns-app-*/*/*.log
+    jaeger: null
+    prometheus: null
+    zipkin: null
     otlp:
       protocols:
         grpc:
           endpoint: 0.0.0.0:4317
         http:
           endpoint: 0.0.0.0:4318
+    # 차트 0.169.0의 logsCollection 프리셋 키에 맞춥니다. 렌더링 시 file_log로 변환됩니다.
+    filelog:
+      # CRI 로그 봉투를 벗긴 뒤 sns-app의 JSON 본문을 읽습니다.
+      operators:
+        - type: container
+          id: container-parser
+        - type: json_parser
+          if: 'resource["k8s.container.name"] == "sns-app" and body matches "^\\{"'
+          parse_to: attributes.app
+          timestamp:
+            parse_from: attributes.app["@timestamp"]
+            layout_type: gotime
+            layout: '2006-01-02T15:04:05.999999999Z07:00'
+          severity:
+            parse_from: attributes.app.level
+        - type: move
+          if: 'attributes.app != nil'
+          from: attributes.app.service_name
+          to: resource["service.name"]
+        - type: trace_parser
+          if: 'attributes.app != nil and attributes.app.traceId != nil and attributes.app.spanId != nil'
+          trace_id:
+            parse_from: attributes.app.traceId
+          span_id:
+            parse_from: attributes.app.spanId
+        - type: move
+          if: 'attributes.app != nil'
+          from: attributes.app.message
+          to: body
+        - type: move
+          if: 'attributes.app != nil and attributes.app.stack_trace != nil'
+          from: attributes.app.stack_trace
+          to: attributes.exception_stacktrace
+        - type: move
+          if: 'attributes.app != nil'
+          from: attributes.app.logger_name
+          to: attributes.logger_name
+        - type: remove
+          if: 'attributes.app != nil'
+          field: attributes.app
 
   exporters:
+    debug: null
     otlphttp/loki:
       endpoint: http://loki.monitoring.svc.cluster.local:3100/otlp
+
     otlp/tempo:
       endpoint: tempo.monitoring.svc.cluster.local:4317
       tls:
@@ -45,9 +102,10 @@ config:
   service:
     pipelines:
       logs:
-        receivers: [otlp, file_log]
+        receivers: [filelog]
         processors: [memory_limiter, k8s_attributes, batch]
         exporters: [otlphttp/loki]
+      metrics: null
       traces:
         receivers: [otlp]
         processors: [memory_limiter, k8s_attributes, batch]
