@@ -40,6 +40,7 @@ kubectl apply -f k8s/gateway/loki.yaml
 echo "==> 확인"
 kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=loki -n monitoring --timeout=300s
 kubectl get pods -n monitoring -l app.kubernetes.io/name=loki
+kubectl rollout status daemonset/otel-collector-opentelemetry-collector-agent -n monitoring --timeout=300s
 kubectl get pods -n monitoring -l app.kubernetes.io/name=opentelemetry-collector
 echo
-curl -fsS http://loki.localhost/loki/api/v1/labels | json_pp || true
+curl -fsS http://loki.localhost/loki/api/v1/labels | json_pp
