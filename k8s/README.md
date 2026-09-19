@@ -248,9 +248,6 @@ helm install otel-collector open-telemetry/opentelemetry-collector --version 0.1
   -n monitoring -f k8s/monitoring/otel-collector-values.yaml
 
 kubectl apply -f k8s/gateway/loki.yaml
-
-# 설치 후 JSON, 일반 로그, TraceID 파싱과 중복 여부 검증 (임시 Pod 자동 삭제)
-python3 scripts/part-6/verify-logs.py
 ```
 
 ### 4-6. Tempo + OTel Collector 확장 (07강)
