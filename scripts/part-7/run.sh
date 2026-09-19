@@ -44,7 +44,7 @@ helm upgrade --install tempo grafana/tempo \
     "${VALUES[@]}"
 
 echo "==> OTel Collector 갱신 (traces 파이프라인)"
-helm upgrade otel-collector open-telemetry/opentelemetry-collector \
+helm upgrade otel-collector open-telemetry/opentelemetry-collector --version 0.169.0 \
     --namespace monitoring \
     -f k8s/monitoring/otel-collector-values.yaml
 
