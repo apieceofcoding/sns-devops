@@ -99,7 +99,7 @@ k8s/
 │   ├── kube-prometheus-values.yaml       # lite 기본
 │   ├── kube-prometheus-values-full.yaml  # full
 │   ├── loki-values.yaml           # Loki Helm values (공통)
-│   ├── otel-collector-values.yaml # OTel Collector Helm values (공통)
+│   ├── otel-collector-values.yaml # 06강 로그 파일 수집, 07강부터 트레이스 추가
 │   ├── tempo-values.yaml          # lite 기본
 │   ├── tempo-values-full.yaml     # full
 │   └── servicemonitor.yaml        # sns-app ServiceMonitor
@@ -232,8 +232,9 @@ kubectl get httproute -n monitoring
 
 ### 4-5. Loki + OTel Collector (06강)
 
-06강에서는 Loki와 OTel Collector를 설치해 로그를 수집합니다.
-Collector가 수집한 로그를 Loki로 보내도록 설정해요.
+06강에서는 sns-app의 JSON 콘솔 로그를 노드 파일에서 읽어 Loki로 보냅니다.
+앱은 로그 출력, 노드별 OTel Collector는 수집과 전송을 담당해요.
+05강의 Grafana를 그대로 사용하고 Loki 데이터소스를 추가합니다.
 
 ```bash
 helm repo add grafana https://grafana.github.io/helm-charts
@@ -247,11 +248,15 @@ helm install otel-collector open-telemetry/opentelemetry-collector --version 0.1
   -n monitoring -f k8s/monitoring/otel-collector-values.yaml
 
 kubectl apply -f k8s/gateway/loki.yaml
+
+# 설치 후 JSON, 일반 로그, TraceID 파싱과 중복 여부 검증 (임시 Pod 자동 삭제)
+python3 scripts/part-6/verify-logs.py
 ```
 
 ### 4-6. Tempo + OTel Collector 확장 (07강)
 
-07강에서는 Tempo를 설치하고, 06강에서 설치한 Collector에 트레이스 수집을 추가합니다.
+07강에서는 Tempo를 설치하고, 06강에서 설치한 Collector에 OTLP 트레이스 수신을 추가합니다.
+앱의 트레이스는 OTLP로 보내고, 로그는 계속 파일에서 수집해요.
 `part-7-traces` 브랜치의 values 파일로 기존 Collector를 갱신하면 로그 수집을 유지하면서
 트레이스를 Tempo로 보낼 수 있어요.
 
@@ -319,7 +324,7 @@ helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 88.
   - `k8s/monitoring/servicemonitor.yaml` 적용 여부 확인
   - Helm 설치 시 `-f k8s/monitoring/kube-prometheus-values.yaml` 누락 여부 확인
 - 로그가 중복 수집됨
-  - `k8s/monitoring/otel-collector-values.yaml`의 file_log `exclude` 확인
+  - 앱에 OTLP 로그 appender가 남아 있지 않은지 확인해요. 로그는 파일 수집 한 경로만 사용합니다.
 
 ## 8) 학습용 vs 실무용
 
