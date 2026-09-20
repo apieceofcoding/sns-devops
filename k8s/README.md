@@ -108,7 +108,7 @@ k8s/
     ├── postgres.yaml
     ├── redis.yaml
     ├── rustfs.yaml
-    ├── recommender.yaml          # 추천 서비스 (07강)
+    ├── recommend.yaml            # 추천 서비스 (07강)
     └── app.yaml
 ```
 
@@ -251,6 +251,15 @@ kubectl apply -f k8s/gateway/loki.yaml
 ```
 
 ### 4-6. Tempo + OTel Collector 확장 (07강)
+
+먼저 Go 추천 서비스를 로컬에서 빌드하고 Kind에 배포합니다. 별도 이미지 레지스트리는 필요 없어요.
+
+```bash
+docker build -t sns-recommend:latest apps/recommend
+kind load docker-image sns-recommend:latest --name sns-cluster
+kubectl apply -f k8s/sns-app/recommend.yaml
+kubectl rollout status deployment/sns-recommend -n sns --timeout=120s
+```
 
 07강에서는 Tempo를 설치하고, 06강에서 설치한 Collector에 OTLP 트레이스 수신을 추가합니다.
 앱의 트레이스는 OTLP로 보내고, 로그는 계속 파일에서 수집해요.
