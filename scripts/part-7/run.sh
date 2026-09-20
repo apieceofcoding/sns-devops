@@ -4,11 +4,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/common.sh
-require_files apps/recommender/Dockerfile \
-    apps/recommender/go.mod \
-    apps/recommender/go.sum \
-    apps/recommender/main.go \
-    k8s/sns-app/recommender.yaml \
+require_files apps/recommend/Dockerfile \
+    apps/recommend/go.mod \
+    apps/recommend/go.sum \
+    apps/recommend/main.go \
+    k8s/sns-app/recommend.yaml \
     k8s/monitoring/tempo-values.yaml \
     k8s/monitoring/otel-collector-values.yaml \
     k8s/gateway/tempo.yaml
@@ -20,10 +20,10 @@ VALUES=(-f k8s/monitoring/tempo-values.yaml)
 [ "$PROFILE" = full ] && VALUES+=(-f k8s/monitoring/tempo-values-full.yaml)
 
 echo "==> 추천 서비스 빌드와 배포 (Go)"
-docker build -t sns-recommender:latest apps/recommender
-kind load docker-image sns-recommender:latest --name sns-cluster
-kubectl apply -f k8s/sns-app/recommender.yaml
-kubectl rollout status deployment/sns-recommender -n sns --timeout=120s
+docker build -t sns-recommend:latest apps/recommend
+kind load docker-image sns-recommend:latest --name sns-cluster
+kubectl apply -f k8s/sns-app/recommend.yaml
+kubectl rollout status deployment/sns-recommend -n sns --timeout=120s
 
 echo "==> Tempo 설치 ($PROFILE)"
 helm repo add grafana https://grafana.github.io/helm-charts >/dev/null 2>&1 || true

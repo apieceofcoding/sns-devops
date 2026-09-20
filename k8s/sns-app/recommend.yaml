@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sns-recommender
+  name: sns-recommend
   namespace: sns
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sns-recommender
+      app: sns-recommend
   template:
     metadata:
       labels:
-        app: sns-recommender
+        app: sns-recommend
     spec:
       containers:
-        - name: sns-recommender
-          image: sns-recommender:latest
+        - name: sns-recommend
+          image: sns-recommend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -63,14 +63,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sns-recommender
+  name: sns-recommend
   namespace: sns
   labels:
-    app: sns-recommender
+    app: sns-recommend
 spec:
   type: ClusterIP
   selector:
-    app: sns-recommender
+    app: sns-recommend
   ports:
     - name: http
       port: 8080

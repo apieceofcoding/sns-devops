@@ -108,7 +108,7 @@ k8s/
     ├── postgres.yaml
     ├── redis.yaml
     ├── rustfs.yaml
-    ├── recommender.yaml          # 추천 서비스 (07강)
+    ├── recommend.yaml          # 추천 서비스 (07강)
     └── app.yaml
 ```
 

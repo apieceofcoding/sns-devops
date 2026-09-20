@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	serviceName = "sns-recommender"
+	serviceName = "sns-recommend"
 
 	maxRequestBodyBytes = 1 << 20
 )
