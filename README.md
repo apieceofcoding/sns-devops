@@ -73,3 +73,9 @@ cd scripts/part-2
 CI가 수정할 저장소와 Argo CD가 감시할 저장소는 모두 자신의 `sns-devops`로 지정하세요.
 CI의 checkout에는 `ref: main`, Argo CD에는 `targetRevision: main`을 명시합니다.
 강의가 바뀌어도 이 연결은 유지해요.
+
+## 07강 추천 서비스
+
+`apps/recommender`는 트레이스 실습용 모의 서비스입니다. 수강생은 Go 코드를 수정할 필요가 없어요.
+현재는 공개 이미지 발행 전이라 `scripts/part-7/run.sh`가 Docker로 빌드하고 Kind에 적재합니다.
+앱을 07강 코드로 배포한 뒤 `sns-app/scripts/part-7/run.sh`를 실행하면 두 서비스의 트레이스를 생성할 수 있어요.
