@@ -4,14 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"hash/fnv"
 	"log/slog"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
-	"sort"
 	"strconv"
 	"syscall"
 	"time"
@@ -182,19 +179,15 @@ func score(ctx context.Context, cfg config, segment string) {
 	time.Sleep(time.Duration(delay) * time.Millisecond)
 }
 
+// 실제 추천 모델 대신 사용자별로 후보 순서를 회전합니다.
 func rank(userID int64, postIDs []int64) []int64 {
-	ranked := make([]int64, len(postIDs))
-	copy(ranked, postIDs)
-	sort.SliceStable(ranked, func(i, j int) bool {
-		return affinity(userID, ranked[i]) > affinity(userID, ranked[j])
-	})
-	return ranked
-}
-
-func affinity(userID, postID int64) uint32 {
-	h := fnv.New32a()
-	_, _ = fmt.Fprintf(h, "%d:%d", userID, postID)
-	return h.Sum32()
+	ranked := make([]int64, 0, len(postIDs))
+	if len(postIDs) == 0 {
+		return ranked
+	}
+	offset := int(userID % int64(len(postIDs)))
+	ranked = append(ranked, postIDs[offset:]...)
+	return append(ranked, postIDs[:offset]...)
 }
 
 func segmentOf(userID int64) string {
@@ -238,10 +231,7 @@ func initTracer(otlpURL string) (func(context.Context), error) {
 	)
 	otel.SetTracerProvider(tp)
 
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-		propagation.TraceContext{},
-		propagation.Baggage{},
-	))
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 
 	return func(ctx context.Context) { _ = tp.Shutdown(ctx) }, nil
 }
