@@ -1,4 +1,4 @@
-module github.com/apieceofcoding/sns-devops/apps/recommender
+module github.com/apieceofcoding/sns-devops/apps/recommend
 
 go 1.25.0
 
