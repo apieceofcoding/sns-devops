@@ -33,10 +33,10 @@ fi
 
 echo
 echo "==> 추천 서비스 확인 (beta 세그먼트 실패의 상대편입니다)"
-if kubectl get deployment sns-recommender -n sns >/dev/null 2>&1; then
-    kubectl rollout status deployment/sns-recommender -n sns --timeout=60s
+if kubectl get deployment sns-recommend -n sns >/dev/null 2>&1; then
+    kubectl rollout status deployment/sns-recommend -n sns --timeout=60s
 else
-    echo "  sns-recommender 가 없습니다. sns-devops/scripts/part-7 폴더에서 ./run.sh를 먼저 실행하세요." >&2
+    echo "  sns-recommend 가 없습니다. sns-devops/scripts/part-7 폴더에서 ./run.sh를 먼저 실행하세요." >&2
 fi
 
 echo
