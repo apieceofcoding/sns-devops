@@ -9,7 +9,7 @@ tempo:
       memory: 192Mi
     limits:
       cpu: 500m
-      memory: 384Mi
+      memory: 512Mi
   metricsGenerator:
     enabled: false
   receivers:
