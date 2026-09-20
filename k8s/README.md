@@ -257,6 +257,7 @@ kubectl apply -f k8s/gateway/loki.yaml
 ```bash
 docker build -t sns-recommend:latest apps/recommend
 kind load docker-image sns-recommend:latest --name sns-cluster
+kubectl apply -f k8s/sns-app/app.yaml
 kubectl apply -f k8s/sns-app/recommend.yaml
 kubectl rollout status deployment/sns-recommend -n sns --timeout=120s
 ```
