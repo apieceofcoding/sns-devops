@@ -7,7 +7,7 @@ Kind 클러스터 설정, Kubernetes 매니페스트, Helm values를 관리합�
 `main`에는 기본 안내와 실행 스크립트가 먼저 제공되어 있고, 이 문서는 02강부터 포함돼요. 아래 설정 파일은 해당 단원에서 작성한 뒤 명령을 실행합니다.
 완료본을 참고할 때도 현재 단원까지 준비된 파일과 환경에 맞는 명령만 실행하세요.
 
-명령은 `sns-devops` 루트 폴더 기준입니다. 단원 폴더에서 실행하는 스크립트 사용법은 [scripts/README.md](../scripts/README.md)를 참고해요.
+명령은 별도 표시가 없으면 `sns-devops` 루트 폴더 기준입니다. 설치와 설정은 아래 명령을 직접 실행하고, 08강과 09강의 재현 및 분석에는 스크립트를 사용해요.
 
 
 ## 1) 사전 준비
@@ -290,11 +290,15 @@ Slack 앱의 Incoming Webhooks에서 알림 채널을 선택하고 URL을 발급
 kubectl create secret generic slack-webhook -n monitoring \
   --from-literal=url='실제_WEBHOOK_URL'
 
-# Slack 설정과 경보 규칙 적용
-./scripts/part-8/run.sh
+# Slack 설정 적용
+helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 88.3.0 \
+  -n monitoring --reuse-values -f k8s/monitoring/alertmanager-values.yaml
+
+# 경보 규칙 적용
+kubectl apply -f k8s/monitoring/alertrules.yaml
 ```
 
-`sns-app` 폴더에서 아래 명령을 하나씩 실행합니다. 각 명령은 준비 30초, 재현 3분, 복구 3분 순서예요.
+**재현:** `sns-app` 폴더에서 아래 명령을 하나씩 실행합니다. 각 명령은 준비 30초, 재현 3분, 복구 3분 순서예요.
 
 ```bash
 ./scripts/part-8/run.sh rate     # 초당 요청량 5건 초과
@@ -307,7 +311,15 @@ kubectl create secret generic slack-webhook -n monitoring \
 ### 4-8. AI Agent로 장애 분석 (09강)
 
 09강 앱을 main에 머지하고 CI와 ArgoCD로 배포합니다. 추천 서비스와 메트릭, 로그, 트레이스 수집이 준비되어 있어야 해요.
-`sns-devops`에는 09강의 `tools/obsctl`과 장애 분석 스킬을 준비합니다.
+`sns-devops`에는 09강의 `tools/obsctl`과 장애 분석 스킬을 준비합니다. 추가 Helm 설치는 없으며, 기존 배포 상태를 확인해요.
+
+```bash
+kubectl rollout status deployment/sns-app -n sns --timeout=180s
+kubectl rollout status deployment/sns-recommend -n sns --timeout=120s
+kubectl get pods -n monitoring
+```
+
+**재현과 분석:** 아래 스크립트를 순서대로 실행합니다.
 
 ```bash
 # sns-app 폴더: 장애 분석용 요청 60회
