@@ -9,12 +9,22 @@ spec:
   groups:
     - name: sns-app
       rules:
+        - alert: SnsAppHighRequestRate
+          expr: |
+            sum(rate(http_server_requests_seconds_count{namespace="sns", service="sns-app", uri!~"/actuator.*"}[2m])) > 5
+          for: 30s
+          labels:
+            severity: warning
+          annotations:
+            summary: "sns-app 초당 요청량 5건 초과"
+            description: "현재 초당 요청량: {{ $value | humanize }}건"
+
         - alert: SnsAppHighErrorRate
           expr: |
             (
-              sum(rate(http_server_requests_seconds_count{job="sns-app", status=~"5.."}[1m]))
+              sum(rate(http_server_requests_seconds_count{namespace="sns", service="sns-app", uri!~"/actuator.*", status=~"5.."}[2m]))
               /
-              sum(rate(http_server_requests_seconds_count{job="sns-app"}[1m]))
+              (sum(rate(http_server_requests_seconds_count{namespace="sns", service="sns-app", uri!~"/actuator.*"}[2m])) > 0)
             ) > 0.1
           for: 30s
           labels:
@@ -26,7 +36,7 @@ spec:
         - alert: SnsAppHighLatency
           expr: |
             histogram_quantile(0.95,
-              sum(rate(http_server_requests_seconds_bucket{job="sns-app"}[1m])) by (le)
+              sum(rate(http_server_requests_seconds_bucket{namespace="sns", service="sns-app", uri!~"/actuator.*"}[2m])) by (le)
             ) > 1
           for: 30s
           labels:
