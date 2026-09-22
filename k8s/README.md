@@ -335,6 +335,24 @@ curl -f http://sns.localhost/api/v1/demo/ok
 
 기존 `SnsAppDown` 경보도 유지합니다. 세 가지 RED 실습에서는 앱을 끄지 않아요.
 
+#### 로그와 트레이스 알림은 언제 쓸까요?
+
+로그도 알림을 만들 수 있습니다. 예를 들어 아래 LogQL은 최근 2분간 실습 오류가 기록된 횟수를 구해요.
+
+```logql
+sum(count_over_time({service_name="sns-app"} |= "[STEP 3] 오류 발생:" [2m])) or vector(0)
+```
+
+Grafana Alerting에서 이 값이 5보다 크면 알리도록 설정할 수 있습니다. 같은 Alertmanager로 모으려면 Loki Ruler에서 평가해 전달해요. 위 쿼리는 설명용이며 자동 적용하지 않습니다.
+
+- 기본 경보는 사용자에게 영향을 주는 오류율과 지연으로 구성해요. 운영에서는 SLO 위반을 기준으로 다듬습니다.
+- 로그 알림은 결제 실패나 데이터 유실처럼 별도 대응이 필요한 사건에 씁니다. 모든 ERROR 줄마다 알리면 중복 알림이 많아져요.
+- 가능하면 긴 오류 문장보다 일정한 `error_code` 필드를 사용합니다. 사용자 ID와 오류 전문을 경보 라벨에 넣지 않아요.
+- 트레이스는 오류 상태와 속성을 집계해 알릴 수 있습니다. Tempo의 span metrics를 Prometheus로 보내는 방식이 한 예예요. 현재 full 설정에는 metrics-generator가 있지만 추가 경보 규칙은 없습니다.
+- 샘플링된 트레이스는 일부 요청이 빠지므로 정확한 전체 오류율의 기준으로 바로 쓰지 않습니다. RED로 이상을 감지하고 로그와 트레이스로 원인을 찾는 흐름을 기본으로 삼아요.
+
+참고: [Loki 알림](https://grafana.com/docs/loki/latest/alert/), [Tempo span metrics](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/span-metrics-metrics-generator/), [Google SRE 모니터링](https://sre.google/sre-book/monitoring-distributed-systems/).
+
 ## 5) 접속 URL
 
 - SNS App: `http://sns.localhost`
