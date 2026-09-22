@@ -215,8 +215,6 @@ helm install prometheus prometheus-community/kube-prometheus-stack --version 88.
 kubectl apply -f k8s/monitoring/servicemonitor.yaml
 kubectl apply -f k8s/gateway/monitoring.yaml
 
-# 경보 규칙은 08강에서 적용합니다.
-kubectl apply -f k8s/monitoring/alertrules.yaml
 ```
 
 full 은 마지막 `-f` 뒤에 `-f k8s/monitoring/kube-prometheus-values-full.yaml` 을 추가합니다.
@@ -282,20 +280,60 @@ helm upgrade otel-collector open-telemetry/opentelemetry-collector --version 0.1
 kubectl apply -f k8s/gateway/tempo.yaml
 ```
 
-### 4-7. AlertManager Slack 연동 (08강)
+### 4-7. RED 경보와 Slack 연동 (08강)
 
-경보 규칙은 08강에서 추가하고 적용합니다. 05강에서는 경보 규칙 적용을 실행하지 않으며, 아래 Slack 연동도 08강에서 진행해요.
-
-`slack-webhook` secret 을 만든 뒤 values 를 적용하세요.
+08강 앱을 빌드하고 배포한 뒤 진행합니다. 빠른 정상 응답(`/api/v1/demo/ok`), 500 오류(`/api/v1/demo/error`), 2초 지연(`/api/v1/demo/slow`)을 사용해요.
+앱의 HTTP 히스토그램 설정도 필요합니다. 완료 브랜치에는 포함되어 있어요.
 
 ```bash
-kubectl create secret generic slack-webhook \
-  -n monitoring \
-  --from-literal=url='https://hooks.slack.com/services/xxx/yyy/zzz'
+# sns-app 폴더에서 빌드
+./gradlew build jibDockerBuild
 
-helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 88.3.0 \
-  -n monitoring --reuse-values -f k8s/monitoring/alertmanager-values.yaml
+# sns-devops 폴더에서 배포
+kind load docker-image springboot-sns:latest --name sns-cluster
+kubectl set image deployment/sns-app sns-app=springboot-sns:latest -n sns
+kubectl rollout restart deployment/sns-app -n sns
+kubectl rollout status deployment/sns-app -n sns --timeout=180s
 ```
+
+ArgoCD를 사용 중이면 실습 동안 자동 동기화를 끄고 진행해요. 완료 후 Git의 이미지 설정과 자동 동기화를 복구합니다.
+
+Slack 앱에서 Incoming Webhooks를 켜고 알림 채널의 URL을 발급합니다. URL은 Git에 저장하지 않아요.
+
+```bash
+kubectl create secret generic slack-webhook -n monitoring \
+  --from-literal=url='실제_WEBHOOK_URL'
+
+./scripts/part-8/run.sh
+```
+
+최근 2분의 값을 계산하고, 기준을 30초 넘으면 주의 경보가 발생합니다. 수집과 평가 간격 때문에 즉시 울리지는 않아요.
+`/actuator/*` 요청은 제외합니다. 요청량 기준은 실습용이며, 실제 서비스에서는 평소 트래픽에 맞춥니다.
+
+| 경보 | 기준 | 재현 방법 |
+| --- | --- | --- |
+| `SnsAppHighRequestRate` | 초당 5건 초과 | 빠른 정상 요청 반복 |
+| `SnsAppHighErrorRate` | 5xx 비율 10% 초과 | 500 오류를 약 1초 간격으로 반복 |
+| `SnsAppHighLatency` | p95 응답 시간 1초 초과 | 2초 걸리는 요청 반복 |
+
+`sns-app/scripts/part-8` 폴더에서 다음 명령을 **하나씩** 실행해요. 각 명령은 정상 요청 30초, 재현 3분, 정상 요청으로 복구 3분 순서입니다.
+
+```bash
+./run.sh rate
+./run.sh error
+./run.sh latency
+```
+
+[Prometheus Alerts](http://prometheus.localhost/alerts)에서 해당 경보의 `pending → firing → inactive`와 Slack의 발생, 해소 메시지를 확인합니다.
+이전 경보가 해소된 뒤 다음 명령을 실행하세요. Slack 해소 메시지는 약 1분 더 기다려야 할 수 있어요.
+
+스크립트는 요청만 보내므로 별도 리소스를 만들지 않습니다. 중간에 중단했다면 정상 요청을 보내 복구를 확인해요.
+
+```bash
+curl -f http://sns.localhost/api/v1/demo/ok
+```
+
+기존 `SnsAppDown` 경보도 유지합니다. 세 가지 RED 실습에서는 앱을 끄지 않아요.
 
 ## 5) 접속 URL
 
