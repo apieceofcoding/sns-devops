@@ -282,139 +282,59 @@ kubectl apply -f k8s/gateway/tempo.yaml
 
 ### 4-7. RED 경보와 Slack 연동 (08강)
 
-08강 앱을 빌드하고 배포한 뒤 진행합니다. 빠른 정상 응답(`/api/v1/demo/ok`), 500 오류(`/api/v1/demo/error`), 2초 지연(`/api/v1/demo/slow`)을 사용해요.
-앱의 HTTP 히스토그램 설정도 필요합니다. 완료 브랜치에는 포함되어 있어요.
+`sns-app`의 08강 코드를 main에 머지하고, CI와 ArgoCD로 배포가 완료되면 진행해요.
+Slack 앱의 Incoming Webhooks에서 알림 채널을 선택하고 URL을 발급합니다. URL은 Git에 저장하지 않아요.
 
 ```bash
-# sns-app 폴더에서 빌드
-./gradlew build jibDockerBuild
-
-# sns-devops 폴더에서 배포
-kind load docker-image springboot-sns:latest --name sns-cluster
-kubectl set image deployment/sns-app sns-app=springboot-sns:latest -n sns
-kubectl rollout restart deployment/sns-app -n sns
-kubectl rollout status deployment/sns-app -n sns --timeout=180s
-```
-
-ArgoCD를 사용 중이면 실습 동안 자동 동기화를 끄고 진행해요. 완료 후 Git의 이미지 설정과 자동 동기화를 복구합니다.
-
-Slack 앱에서 Incoming Webhooks를 켜고 알림 채널의 URL을 발급합니다. URL은 Git에 저장하지 않아요.
-
-```bash
+# sns-devops 폴더에서 최초 1회 등록
 kubectl create secret generic slack-webhook -n monitoring \
   --from-literal=url='실제_WEBHOOK_URL'
 
+# Slack 설정과 경보 규칙 적용
 ./scripts/part-8/run.sh
 ```
 
-최근 2분의 값을 계산하고, 기준을 30초 넘으면 주의 경보가 발생합니다. 수집과 평가 간격 때문에 즉시 울리지는 않아요.
-`/actuator/*` 요청은 제외합니다. 요청량 기준은 실습용이며, 실제 서비스에서는 평소 트래픽에 맞춥니다.
-
-| 경보 | 기준 | 재현 방법 |
-| --- | --- | --- |
-| `SnsAppHighRequestRate` | 초당 5건 초과 | 빠른 정상 요청 반복 |
-| `SnsAppHighErrorRate` | 5xx 비율 10% 초과 | 500 오류를 약 1초 간격으로 반복 |
-| `SnsAppHighLatency` | p95 응답 시간 1초 초과 | 2초 걸리는 요청 반복 |
-
-`sns-app/scripts/part-8` 폴더에서 다음 명령을 **하나씩** 실행해요. 각 명령은 정상 요청 30초, 재현 3분, 정상 요청으로 복구 3분 순서입니다.
+`sns-app` 폴더에서 아래 명령을 하나씩 실행합니다. 각 명령은 준비 30초, 재현 3분, 복구 3분 순서예요.
 
 ```bash
-./run.sh rate
-./run.sh error
-./run.sh latency
+./scripts/part-8/run.sh rate     # 초당 요청량 5건 초과
+./scripts/part-8/run.sh error    # 5xx 비율 10% 초과
+./scripts/part-8/run.sh latency  # p95 응답 시간 1초 초과
 ```
 
-[Prometheus Alerts](http://prometheus.localhost/alerts)에서 해당 경보의 `pending → firing → inactive`와 Slack의 발생, 해소 메시지를 확인합니다.
-이전 경보가 해소된 뒤 다음 명령을 실행하세요. Slack 해소 메시지는 약 1분 더 기다려야 할 수 있어요.
+최근 2분의 값이 기준을 30초 넘으면 경보가 발생합니다. Prometheus Alerts와 Slack에서 발생과 해소를 확인한 뒤 다음 명령을 실행해요.
 
-스크립트는 요청만 보내므로 별도 리소스를 만들지 않습니다. 중간에 중단했다면 정상 요청을 보내 복구를 확인해요.
+### 4-8. AI Agent로 장애 분석 (09강)
+
+09강 앱을 main에 머지하고 CI와 ArgoCD로 배포합니다. 추천 서비스와 메트릭, 로그, 트레이스 수집이 준비되어 있어야 해요.
+`sns-devops`에는 09강의 `tools/obsctl`과 장애 분석 스킬을 준비합니다.
 
 ```bash
-curl -f http://sns.localhost/api/v1/demo/ok
+# sns-app 폴더: 장애 분석용 요청 60회
+./scripts/part-9/run.sh 60
+
+# sns-devops 폴더: 최근 30분의 관측 데이터 조회
+./scripts/part-9/run.sh 30
 ```
 
-기존 `SnsAppDown` 경보도 유지합니다. 세 가지 RED 실습에서는 앱을 끄지 않아요.
+AI Agent에 아래와 같이 요청해요.
 
-#### 로그와 트레이스 알림은 언제 쓸까요?
+> sns-app의 최근 30분 오류 원인을 메트릭, 로그, 트레이스로 조사하고 근거와 대응안을 알려줘. 코드 수정과 배포는 하지 마.
 
-로그도 알림을 만들 수 있습니다. 예를 들어 아래 LogQL은 최근 2분간 실습 오류가 기록된 횟수를 구해요.
+오류가 발생하는 요청 조건과 실패한 호출 구간을 확인합니다.
 
-```logql
-sum(count_over_time({service_name="sns-app"} |= "[STEP 3] 오류 발생:" [2m])) or vector(0)
+## 5) 접속과 상태 확인
+
+| 서비스 | 주소 |
+| --- | --- |
+| SNS App | http://sns.localhost |
+| ArgoCD | http://argocd.localhost |
+| Grafana | http://grafana.localhost |
+| Prometheus Alerts | http://prometheus.localhost/alerts |
+
+```bash
+kubectl get pods -A
+curl -f http://sns.localhost/actuator/health
 ```
 
-Grafana Alerting에서 이 값이 5보다 크면 알리도록 설정할 수 있습니다. 같은 Alertmanager로 모으려면 Loki Ruler에서 평가해 전달해요. 위 쿼리는 설명용이며 자동 적용하지 않습니다.
-
-- 기본 경보는 사용자에게 영향을 주는 오류율과 지연으로 구성해요. 운영에서는 SLO 위반을 기준으로 다듬습니다.
-- 로그 알림은 결제 실패나 데이터 유실처럼 별도 대응이 필요한 사건에 씁니다. 모든 ERROR 줄마다 알리면 중복 알림이 많아져요.
-- 가능하면 긴 오류 문장보다 일정한 `error_code` 필드를 사용합니다. 사용자 ID와 오류 전문을 경보 라벨에 넣지 않아요.
-- 트레이스는 오류 상태와 속성을 집계해 알릴 수 있습니다. Tempo의 span metrics를 Prometheus로 보내는 방식이 한 예예요. 현재 full 설정에는 metrics-generator가 있지만 추가 경보 규칙은 없습니다.
-- 샘플링된 트레이스는 일부 요청이 빠지므로 정확한 전체 오류율의 기준으로 바로 쓰지 않습니다. RED로 이상을 감지하고 로그와 트레이스로 원인을 찾는 흐름을 기본으로 삼아요.
-
-참고: [Loki 알림](https://grafana.com/docs/loki/latest/alert/), [Tempo span metrics](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/span-metrics-metrics-generator/), [Google SRE 모니터링](https://sre.google/sre-book/monitoring-distributed-systems/).
-
-## 5) 접속 URL
-
-- SNS App: `http://sns.localhost`
-- ArgoCD: `http://argocd.localhost`
-- Grafana: `http://grafana.localhost`
-- Prometheus: `http://prometheus.localhost`
-- Loki: `http://loki.localhost`
-- Tempo: `http://tempo.localhost`
-
-## 6) 검증 체크리스트
-
-1. `kubectl get nodes` -> 모두 `Ready`
-2. `kubectl get pods -A` -> 주요 Pod `Running`
-3. `curl http://sns.localhost/actuator/health` -> `UP`
-4. Grafana Explore에서 Loki 로그 조회 가능
-5. Grafana Explore에서 Tempo trace 조회 가능
-
-## 7) 자주 막히는 문제
-
-- `*.localhost` 접속 안 됨
-  - Traefik 이 아직 준비 중일 수 있음 (`kubectl get pods -n traefik`)
-  - `Gateway` 상태 확인 (`kubectl get gateway -n traefik`, `PROGRAMMED=True` 여야 함)
-  - `HTTPRoute` 상태 확인 (`kubectl describe httproute <이름> -n <네임스페이스>`,
-    `Accepted` 와 `ResolvedRefs` 가 모두 True 여야 함)
-  - 로컬 DNS/hosts 문제 시 `curl -H "Host: sns.localhost" http://127.0.0.1`
-- `no matches for kind "HTTPRoute"` 오류
-  - Gateway API CRD 미설치. 4-1 의 `kubectl apply` 를 먼저 실행하세요.
-- ArgoCD 동기화 안 됨
-  - `kubectl get applications -n argocd`
-  - `repoURL/path` 오타 확인 (`k8s/argocd/application.yaml`)
-- Prometheus가 `sns-app` 메트릭 미수집
-  - `k8s/monitoring/servicemonitor.yaml` 적용 여부 확인
-  - Helm 설치 시 `-f k8s/monitoring/kube-prometheus-values.yaml` 누락 여부 확인
-- 로그가 중복 수집됨
-  - 앱에 OTLP 로그 appender가 남아 있지 않은지 확인해요. 로그는 파일 수집 한 경로만 사용합니다.
-
-## 8) 학습용 vs 실무용
-
-이 저장소의 기본 설정은 학습/데모 최적화입니다.
-
-- 학습용: 단일 바이너리 Loki/Tempo, 로컬 스토리지, 단순 secret
-- 실무용: object storage, 백업/보존 정책, 외부 secret manager, TLS/mTLS, RBAC 최소권한
-
-### Gateway 의 라우트 허용 범위
-
-`traefik-values.yaml` 의 리스너는 `namespacePolicy.from: All` 입니다.
-어느 네임스페이스에서든 이 Gateway 에 HTTPRoute 를 붙일 수 있다는 뜻이에요.
-실습에서 `sns`, `rustfs`, `monitoring`, `argocd` 네 곳의 라우트를 추가 설정 없이
-붙이려고 이렇게 두었습니다.
-
-혼자 쓰는 로컬 클러스터라 문제가 없지만, 여러 팀이 함께 쓰는 클러스터라면
-다른 팀이 우리 호스트명을 선점할 수 있습니다. 실무에서는 범위를 좁히세요.
-
-```yaml
-gateway:
-  listeners:
-    web:
-      namespacePolicy:
-        from: Selector
-        selector:
-          matchLabels:
-            gateway-access: "true"
-```
-
-이렇게 두면 `gateway-access=true` 라벨이 붙은 네임스페이스만 라우트를 붙일 수 있어요.
+Pod가 준비되고 앱이 `UP`인지 확인해요. 접속이 안 되면 `kubectl get httproute -A`로 경로 상태를 확인합니다.
