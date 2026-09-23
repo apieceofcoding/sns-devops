@@ -29,3 +29,5 @@ cd ../part-3
 
 02강, 05강, 07강에서 full을 쓰려면 `./run.sh full`로 실행해요. 생략하면 lite입니다.
 이전 단원까지의 환경이 필요합니다. 02강 실행 전에는 `sns-app`의 02강 스크립트로 이미지를 먼저 빌드하세요.
+
+09강은 `/api/v1/demo/trace?scenario=incident`로 장애를 재현합니다. 07강의 `/api/v1/demo/trace` 호출과 응답은 유지해요. 두 모드는 메트릭의 URI가 같으므로 `recommend-fetch` span과 장애 분석 로그로 09강 요청을 구분합니다.

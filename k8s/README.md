@@ -319,7 +319,7 @@ kubectl rollout status deployment/sns-recommend -n sns --timeout=120s
 kubectl get pods -n monitoring
 ```
 
-**재현과 분석:** 아래 스크립트를 순서대로 실행합니다.
+**재현과 분석:** 아래 스크립트를 순서대로 실행합니다. 09강은 `/trace?scenario=incident`를 호출하고, 07강은 기존 `/trace`를 사용해요.
 
 ```bash
 # sns-app 폴더: 장애 분석용 요청 60회
