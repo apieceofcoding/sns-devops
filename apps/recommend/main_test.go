@@ -133,9 +133,9 @@ func TestIncomingTraceparentIsContinued(t *testing.T) {
 	if err := json.NewDecoder(&logs).Decode(&requestLog); err != nil {
 		t.Fatal(err)
 	}
-	if requestLog["msg"] != "랭킹 요청" || requestLog["segment"] != "beta" ||
+	if requestLog["msg"] != "랭킹 완료" || requestLog["segment"] != "beta" ||
 		requestLog["trace_id"] != incomingTraceID {
-		t.Fatalf("요청 시작 로그에 그룹과 TraceID가 없습니다: %v", requestLog)
+		t.Fatalf("완료 로그에 그룹과 TraceID가 없습니다: %v", requestLog)
 	}
 
 	spans := recorder.Ended()

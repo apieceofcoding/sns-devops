@@ -116,8 +116,6 @@ func rankHandler(cfg config) http.Handler {
 			attribute.Int("rank.candidates", len(req.PostIDs)),
 		)
 
-		logger(ctx).Info("랭킹 요청", "userId", req.UserID, "segment", segment)
-
 		start := time.Now()
 		score(ctx, cfg, segment)
 		ranked := rank(req.UserID, req.PostIDs)
