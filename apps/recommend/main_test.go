@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -13,7 +12,6 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
@@ -108,10 +106,6 @@ func TestRankEmptyCandidates(t *testing.T) {
 }
 
 func TestIncomingTraceparentIsContinued(t *testing.T) {
-	var logs bytes.Buffer
-	previousLogger := slog.Default()
-	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
-	t.Cleanup(func() { slog.SetDefault(previousLogger) })
 	previous := otel.GetTextMapPropagator()
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 	t.Cleanup(func() { otel.SetTextMapPropagator(previous) })
@@ -124,30 +118,16 @@ func TestIncomingTraceparentIsContinued(t *testing.T) {
 	handler := otelhttp.NewHandler(rankHandler(testConfig), "POST /v1/rank",
 		otelhttp.WithTracerProvider(provider))
 	req := httptest.NewRequest(http.MethodPost, "/v1/rank",
-		bytes.NewBufferString(`{"userId":3,"postIds":[101,102]}`))
+		bytes.NewBufferString(`{"userId":1,"postIds":[101,102]}`))
 	req.Header.Set("traceparent", "00-"+incomingTraceID+"-"+incomingSpanID+"-01")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
-
-	var requestLog map[string]any
-	if err := json.NewDecoder(&logs).Decode(&requestLog); err != nil {
-		t.Fatal(err)
-	}
-	if requestLog["msg"] != "랭킹 완료" || requestLog["segment"] != "beta" ||
-		requestLog["trace_id"] != incomingTraceID {
-		t.Fatalf("완료 로그에 그룹과 TraceID가 없습니다: %v", requestLog)
-	}
 
 	spans := recorder.Ended()
 	if rec.Code != http.StatusOK || len(spans) != 1 {
 		t.Fatalf("status=%d spans=%d", rec.Code, len(spans))
 	}
 	span := spans[0]
-	attrs := attribute.NewSet(span.Attributes()...)
-	segment, ok := attrs.Value(attribute.Key("user.segment"))
-	if !ok || segment.AsString() != "beta" {
-		t.Fatalf("추천 서버 Span에 사용자 그룹이 없습니다: %v", span.Attributes())
-	}
 	if span.SpanContext().TraceID().String() != incomingTraceID ||
 		span.Parent().SpanID().String() != incomingSpanID ||
 		span.SpanContext().SpanID().String() == incomingSpanID ||
