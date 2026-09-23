@@ -5,7 +5,7 @@ description: sns-app의 오류율 상승, 5xx, 응답 지연 원인을 obsctl로
 
 # 장애 분석
 
-`sns-devops` 루트에서 실행해요. PowerShell에서는 아래 `skills/obsctl` 명령 앞에 `py -3` 또는 `python`을 붙입니다. 기본 대상은 `sns-app`, 시간은 최근 30분이며 요청에 맞게 바꿉니다.
+`sns-devops` 루트에서 실행해요. 기본 대상은 `sns-app`, 시간은 최근 30분이며 요청에 맞게 바꿉니다.
 
 1. `skills/obsctl analyze sns-app 30`으로 실패가 늘어난 API와 시간대를 찾습니다.
 2. 결과의 TraceID로 `skills/obsctl traces <traceId>`를 실행해 느리거나 실패한 호출을 확인해요.
