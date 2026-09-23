@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"slices"
 	"sort"
-	"strconv"
 	"testing"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
@@ -89,54 +90,6 @@ func TestRankHandlerResponse(t *testing.T) {
 	}
 }
 
-func TestSegmentHandlerResponse(t *testing.T) {
-	rec := httptest.NewRecorder()
-
-	segmentHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/v1/segment?userId=3", nil))
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("200 을 기대했지만 %d", rec.Code)
-	}
-	var resp segmentResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("응답을 읽을 수 없습니다: %v", err)
-	}
-	if resp.UserID != 3 || resp.Segment != "beta" {
-		t.Errorf("userId 3 은 beta 여야 하는데 %+v", resp)
-	}
-}
-
-func TestSegmentHandlerRejectsInvalidUserID(t *testing.T) {
-	for _, query := range []string{"", "?userId=", "?userId=abc", "?userId=0", "?userId=-1"} {
-		rec := httptest.NewRecorder()
-
-		segmentHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/v1/segment"+query, nil))
-
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("%q: 400 을 기대했지만 %d", query, rec.Code)
-		}
-	}
-}
-
-func TestSegmentHandlerAgreesWithRankHandler(t *testing.T) {
-	for _, userID := range []int64{1, 2, 3, 4, 6, 9, 100} {
-		rec := httptest.NewRecorder()
-		segmentHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/v1/segment?userId="+strconv.FormatInt(userID, 10), nil))
-		var lookup segmentResponse
-		_ = json.Unmarshal(rec.Body.Bytes(), &lookup)
-
-		body, _ := json.Marshal(rankRequest{UserID: userID, PostIDs: []int64{101}})
-		rec = httptest.NewRecorder()
-		rankHandler(testConfig).ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/v1/rank", bytes.NewReader(body)))
-		var ranked rankResponse
-		_ = json.Unmarshal(rec.Body.Bytes(), &ranked)
-
-		if lookup.Segment != ranked.Segment {
-			t.Errorf("userId %d: 조회는 %q 인데 랭킹은 %q", userID, lookup.Segment, ranked.Segment)
-		}
-	}
-}
-
 func TestRankHandlerRejectsMissingUserID(t *testing.T) {
 	body, _ := json.Marshal(rankRequest{PostIDs: []int64{101}})
 	rec := httptest.NewRecorder()
@@ -155,6 +108,10 @@ func TestRankEmptyCandidates(t *testing.T) {
 }
 
 func TestIncomingTraceparentIsContinued(t *testing.T) {
+	var logs bytes.Buffer
+	previousLogger := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
+	t.Cleanup(func() { slog.SetDefault(previousLogger) })
 	previous := otel.GetTextMapPropagator()
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 	t.Cleanup(func() { otel.SetTextMapPropagator(previous) })
@@ -167,16 +124,30 @@ func TestIncomingTraceparentIsContinued(t *testing.T) {
 	handler := otelhttp.NewHandler(rankHandler(testConfig), "POST /v1/rank",
 		otelhttp.WithTracerProvider(provider))
 	req := httptest.NewRequest(http.MethodPost, "/v1/rank",
-		bytes.NewBufferString(`{"userId":1,"postIds":[101,102]}`))
+		bytes.NewBufferString(`{"userId":3,"postIds":[101,102]}`))
 	req.Header.Set("traceparent", "00-"+incomingTraceID+"-"+incomingSpanID+"-01")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
+
+	var requestLog map[string]any
+	if err := json.NewDecoder(&logs).Decode(&requestLog); err != nil {
+		t.Fatal(err)
+	}
+	if requestLog["msg"] != "랭킹 요청" || requestLog["segment"] != "beta" ||
+		requestLog["trace_id"] != incomingTraceID {
+		t.Fatalf("요청 시작 로그에 그룹과 TraceID가 없습니다: %v", requestLog)
+	}
 
 	spans := recorder.Ended()
 	if rec.Code != http.StatusOK || len(spans) != 1 {
 		t.Fatalf("status=%d spans=%d", rec.Code, len(spans))
 	}
 	span := spans[0]
+	attrs := attribute.NewSet(span.Attributes()...)
+	segment, ok := attrs.Value(attribute.Key("user.segment"))
+	if !ok || segment.AsString() != "beta" {
+		t.Fatalf("추천 서버 Span에 사용자 그룹이 없습니다: %v", span.Attributes())
+	}
 	if span.SpanContext().TraceID().String() != incomingTraceID ||
 		span.Parent().SpanID().String() != incomingSpanID ||
 		span.SpanContext().SpanID().String() == incomingSpanID ||
