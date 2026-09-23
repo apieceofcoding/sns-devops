@@ -310,7 +310,7 @@ kubectl apply -f k8s/monitoring/alertrules.yaml
 ### 4-8. AI Agent로 장애 분석 (09강)
 
 09강 앱을 main에 머지하고 CI와 ArgoCD로 배포합니다. 추천 서비스와 메트릭, 로그, 트레이스 수집이 준비되어 있어야 해요.
-`sns-devops`에는 09강의 `tools/obsctl`과 장애 분석 스킬을 준비합니다. 추가 Helm 설치는 없으며, 기존 배포 상태를 확인해요.
+`sns-devops`에는 09강의 `skills/obsctl`과 장애 분석 스킬을 준비합니다. 추가 Helm 설치는 없으며, 기존 배포 상태를 확인해요.
 
 ```bash
 kubectl rollout status deployment/sns-app -n sns --timeout=180s
