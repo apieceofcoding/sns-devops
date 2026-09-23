@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/common.sh
-require_files tools/obsctl
+require_files skills/obsctl
 MINS="${1:-30}"
 
 # 윈도우는 *.localhost 를 자동으로 127.0.0.1 로 풀지 않습니다. 안 될 때 안내할 위치를 고릅니다.
@@ -41,9 +41,9 @@ fi
 
 echo
 echo "==> 장애 분석 시작점 수집 (최근 ${MINS}분)"
-tools/obsctl analyze sns-app "$MINS"
+skills/obsctl analyze sns-app "$MINS"
 
 echo
-echo "이제 Claude Code 에게 물어보세요."
-echo "  \"sns-app 에러율이 올랐는데 원인 찾아줘\""
+echo "이제 sns-devops 루트에서 codex를 실행하세요."
+echo '  $incident-analysis sns-app의 최근 30분 에러율 상승 원인을 조사하고, 관측 근거와 대응안만 보고해줘. 코드 수정이나 배포는 하지 마.'
 echo "장애 분석 스킬이 이 CLI 로 세 신호를 이어서 원인을 좁힙니다."
