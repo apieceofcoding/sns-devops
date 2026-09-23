@@ -226,7 +226,7 @@ def cmd_analyze(argv):
         ]
     )
 
-    print("\n## 3. 느린 트레이스 (트레이스)")
+    print("\n## 3. 트레이스")
     cmd_traces([f"{{ resource.service.name = {svc_query} }}", str(mins)])
 
     print("\n## 4. 최근 에러 로그 (로그)")
