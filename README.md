@@ -79,10 +79,3 @@ CI의 checkout에는 `ref: main`, Argo CD에는 `targetRevision: main`을 명시
 `apps/recommend`는 트레이스 실습용 모의 서비스입니다. 수강생은 Go 코드를 수정할 필요가 없어요.
 현재는 공개 이미지 발행 전이라 `scripts/part-7/run.sh`가 Docker로 빌드하고 Kind에 적재합니다.
 앱을 07강 코드로 배포한 뒤 `sns-app/scripts/part-7/run.sh`를 실행하면 두 서비스의 트레이스를 생성할 수 있어요.
-
-### 07강과 09강 요청 구분
-
-- 07강: `/api/v1/demo/trace?userId=1`, 기존 트레이스 실습 동작을 유지해요.
-- 09강: `/api/v1/demo/trace?scenario=incident&userId=3`, 추천 호출 실패를 503으로 반환하고 조사용 span을 기록합니다.
-
-09강 요청은 앱의 `scripts/part-9/run.sh 60`으로 생성해요. `/feed`는 사용하지 않습니다.
