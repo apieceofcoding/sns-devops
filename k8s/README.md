@@ -9,7 +9,6 @@ Kind 클러스터 설정, Kubernetes 매니페스트, Helm values를 관리합�
 
 명령은 별도 표시가 없으면 `sns-devops` 루트 폴더 기준입니다. 설치와 설정은 아래 명령을 직접 실행하고, 08강과 09강의 재현 및 분석에는 스크립트를 사용해요.
 
-
 ## 1) 사전 준비
 
 macOS는 [Homebrew](https://brew.sh/ko/)를 먼저 설치한 뒤 터미널에서, Windows는 PowerShell에서 아래 명령을 실행하세요.
@@ -318,8 +317,6 @@ kubectl rollout status deployment/sns-app -n sns --timeout=180s
 kubectl rollout status deployment/sns-recommend -n sns --timeout=120s
 kubectl get pods -n monitoring
 ```
-
-**재현과 분석:** 아래 스크립트를 순서대로 실행합니다.
 
 ```bash
 # sns-app 폴더: 장애 분석용 요청 60회
