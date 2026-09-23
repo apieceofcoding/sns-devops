@@ -79,3 +79,12 @@ CI의 checkout에는 `ref: main`, Argo CD에는 `targetRevision: main`을 명시
 `apps/recommend`는 트레이스 실습용 모의 서비스입니다. 수강생은 Go 코드를 수정할 필요가 없어요.
 현재는 공개 이미지 발행 전이라 `scripts/part-7/run.sh`가 Docker로 빌드하고 Kind에 적재합니다.
 앱을 07강 코드로 배포한 뒤 `sns-app/scripts/part-7/run.sh`를 실행하면 두 서비스의 트레이스를 생성할 수 있어요.
+
+### obsctl 실행 환경
+
+`skills/obsctl`은 관측 조회 CLI이고, `.agents/skills/incident-analysis`는 에이전트의 조사 절차입니다. Python 3.8 이상을 설치하면 추가 패키지나 가상환경 없이 사용할 수 있어요.
+
+- macOS, Git Bash, WSL: `./skills/obsctl --help`
+- Windows PowerShell: `py -3 skills/obsctl --help`, 또는 `python skills/obsctl --help`
+
+`run.sh`는 Windows에서도 Git Bash 또는 WSL에서 실행합니다. CLI는 실행 가능한 `python3`, `python`, `py -3` 순서로 확인해요. Python 설치 후 명령을 찾지 못하면 터미널을 다시 열고 PATH를 확인하세요. PowerShell에서 주소를 바꾸려면 `$env:PROM_URL = "http://localhost:9090"`처럼 지정합니다.

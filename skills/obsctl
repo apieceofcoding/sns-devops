@@ -1,12 +1,19 @@
 #!/bin/sh
-# 이 파일은 sh 로 시작해 python3 (없으면 python) 으로 자기 자신을 다시 실행합니다.
-# 윈도우처럼 python3 라는 이름이 없는 환경에서도 그대로 실행하기 위한 장치입니다.
+# macOS와 Git Bash에서는 실행 가능한 Python 3.8 이상을 찾아 실행합니다.
+# PowerShell에서는 py -3 skills/obsctl 또는 python skills/obsctl을 사용하세요.
 ''''true
-PY=$(command -v python3 || command -v python) || {
-    echo "obsctl: python3 또는 python 이 필요합니다." >&2
-    exit 1
-}
-exec "$PY" "$0" "$@"
+export PYTHONUTF8=1
+export PYTHONIOENCODING=utf-8:backslashreplace
+for interpreter in python3 python; do
+    if [ "$("$interpreter" -c 'import sys; print("obsctl-ready" if sys.version_info >= (3, 8) else "")' 2>/dev/null)" = obsctl-ready ]; then
+        exec "$interpreter" "$0" "$@"
+    fi
+done
+if [ "$(py -3 -c 'import sys; print("obsctl-ready" if sys.version_info >= (3, 8) else "")' 2>/dev/null)" = obsctl-ready ]; then
+    exec py -3 "$0" "$@"
+fi
+echo "obsctl: Python 3.8+ is required. Install Python and add it to PATH." >&2
+exit 1
 #'''
 
 import json
@@ -14,14 +21,24 @@ import os
 import re
 import sys
 import time
+
+if sys.version_info < (3, 8):
+    sys.exit("obsctl: Python 3.8+ is required.")
+for stream in (sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+
 import urllib.error
 import urllib.parse
 import urllib.request
 
 USAGE = """obsctl: 관측 스택(Prometheus, Loki, Tempo)을 HTTP 로 조회하는 CLI.
 
-Claude Code 같은 에이전트가 장애 원인을 찾을 때 쓰라고 만든 도구다.
-표준 라이브러리만 쓰므로 설치가 필요 없다.
+Codex CLI 같은 에이전트가 장애 원인을 찾을 때 쓰라고 만든 도구다.
+Python 3.8 이상이 필요하며, 추가 패키지나 가상환경은 필요 없습니다.
+macOS / Git Bash: ./skills/obsctl --help
+Windows PowerShell: py -3 skills/obsctl --help (또는 python skills/obsctl --help)
+run.sh는 Git Bash 또는 WSL에서 실행합니다.
 
 사용법:
   obsctl metrics '<promql>'          Prometheus 즉시 질의
@@ -52,7 +69,7 @@ def get(url, params=None):
         die(f"{e.code} {e.reason}\n  {full}")
     except urllib.error.URLError as e:
         die(
-            f"접속 실패: {e.reason}\n  {full}\n  HTTPRoute 와 /etc/hosts 를 확인하세요."
+            f"접속 실패: {e.reason}\n  {full}\n  HTTPRoute 와 hosts 파일을 확인하세요."
         )
 
 
