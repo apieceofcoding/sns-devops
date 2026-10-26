@@ -1,7 +1,7 @@
 # sns-devops
 
 배포와 관측 가능성 강의에서 Kubernetes 매니페스트와 Helm values를 작성하는 저장소입니다.
-`main`에는 실습 안내, 전체 실행 스크립트와 빈 `k8s/` 디렉터리가 있어요. 배포 설정은 02강부터 직접 추가합니다.
+`main`에는 최신 실습 안내와 전체 실행 스크립트가 있어요. Kubernetes 안내 문서도 처음부터 제공하며, 매니페스트와 Helm values는 02강부터 직접 추가합니다.
 
 ## 실습 방식
 
@@ -29,10 +29,12 @@ sns-devops/
 │   ├── ...
 │   └── part-9/run.sh
 └── k8s/
-    └── .gitkeep
+    ├── README.md
+    ├── .gitkeep
+    └── monitoring/dashboards/README.md
 ```
 
-전체 Kubernetes 실습 안내는 [part-2의 k8s/README.md](https://github.com/apieceofcoding/sns-devops/blob/part-2-kind-deployment/k8s/README.md)에 있습니다. `part-2`부터 마지막 브랜치까지 같은 최종 안내를 제공해요.
+전체 Kubernetes 실습 안내는 [k8s/README.md](k8s/README.md)에 있습니다. `main`과 모든 `part-*` 브랜치에서 같은 최신 안내를 제공해요.
 01강에서는 `sns-app`만 실행합니다. 이 저장소에는 실행 스크립트가 준비되어 있고, 매니페스트는 02강부터 작성해요.
 
 02강부터 Docker, `kind`, `kubectl`, `helm`을 준비하고 다음 설정을 작성해요.
@@ -76,6 +78,16 @@ CI의 checkout에는 `ref: main`, Argo CD에는 `targetRevision: main`을 명시
 
 ## 07강 추천 서비스
 
-`apps/recommend`는 트레이스 실습용 모의 서비스입니다. 수강생은 Go 코드를 수정할 필요가 없어요.
+07강에서 준비하는 `apps/recommend`는 트레이스 실습용 모의 서비스입니다. 수강생은 Go 코드를 수정할 필요가 없어요.
 현재는 공개 이미지 발행 전이라 `scripts/part-7/run.sh`가 Docker로 빌드하고 Kind에 적재합니다.
 앱을 07강 코드로 배포한 뒤 `sns-app/scripts/part-7/run.sh`를 실행하면 두 서비스의 트레이스를 생성할 수 있어요.
+
+## 공통 자료와 브랜치 반영 원칙
+
+모든 README와 `scripts/part-*/`는 `main`에서 최신본을 관리합니다. 변경은 아래 순서로 앞 브랜치를 다음 브랜치에 병합해 내용과 이력을 함께 반영해요.
+
+`main` → `part-2-kind-deployment` → `part-3-ci-cd` → … → `part-9-ai-agent-analysis`
+
+공통 자료는 모든 단원에서 같게 유지하고, 앱 코드와 배포 설정은 각 단원의 완료 상태를 유지합니다. README와 스크립트가 처음부터 제공되어도 후반부 실습의 코드와 환경까지 준비된 것은 아니에요. 해당 단원의 준비를 마친 뒤 실행하세요.
+
+sns-devops는 02강부터 사용하므로 `part-1` 브랜치는 없습니다.
