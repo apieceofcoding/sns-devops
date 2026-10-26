@@ -1,8 +1,10 @@
 # Grafana 대시보드
 
+안내는 `main`부터 공통으로 제공합니다. 대시보드 JSON과 메트릭 설정은 05강에서 준비한 뒤 사용해요.
+
 ## SNS App RED
 
-[sns-app-red.json](./sns-app-red.json)은 요청량(req/s), 5xx 오류율(%), 평균 응답 시간(ms)을 보여줍니다. 최근 5분 기준이며 `/actuator/health` 요청만 제외해요.
+[sns-app-red.json](https://github.com/apieceofcoding/sns-devops/blob/part-5-metrics/k8s/monitoring/dashboards/sns-app-red.json)은 요청량(req/s), 5xx 오류율(%), 평균 응답 시간(ms)을 보여줍니다. 최근 5분 기준이며 `/actuator/health` 요청만 제외해요.
 
 Grafana **Dashboards → New → Import**에서 JSON을 업로드하고 Prometheus 데이터소스를 선택하세요.
 
